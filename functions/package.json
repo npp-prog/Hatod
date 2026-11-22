@@ -1,0 +1,23 @@
+{
+  "name": "@hatod/functions",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hatod Cloud Functions. Business rules come from @hatod/shared and are bundled in at build time.",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1"
+  }
+}

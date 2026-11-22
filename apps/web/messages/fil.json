@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "Hatod",
+    "tagline": "Umorder sa mga tindahan sa inyong bayan. Pumili ng rider. Direktang magbayad sa kanila.",
+    "description": "Lokal na delivery para sa maliliit na bayan"
+  },
+  "nav": {
+    "signIn": "Mag-sign in",
+    "signOut": "Mag-sign out",
+    "switchTo": "Lumipat sa",
+    "language": "Wika",
+    "menu": "Menu",
+    "areas": {
+      "customer": "Umorder",
+      "shop": "Aking tindahan",
+      "rider": "Rider",
+      "coordinator": "Coordinator",
+      "admin": "Admin"
+    }
+  },
+  "common": {
+    "loading": "Naglo-load…",
+    "continue": "Magpatuloy",
+    "back": "Bumalik",
+    "save": "I-save",
+    "saving": "Sine-save…",
+    "cancel": "Kanselahin",
+    "comingSoon": "Darating sa susunod na update.",
+    "goHome": "Pumunta sa home",
+    "tryAgain": "Subukang muli"
+  },
+  "offline": {
+    "banner": "Naghihintay ng signal. Susubukan ulit pagbalik ng koneksyon.",
+    "back": "May signal na ulit."
+  },
+  "home": {
+    "title": "Ano ang gusto mo ngayon?",
+    "intro": "Lalabas dito ang mga tindahan at rider sa inyong bayan.",
+    "howItWorks": "Paano gumagana ang Hatod",
+    "step1": "Pumili ng tindahan at ilagay ang pagkain sa cart.",
+    "step2": "Pumili ng rider. Makikita mo ang singil nila bago pumili.",
+    "step3": "Direktang magbayad sa tindahan at sa rider: cash, GCash o Maya.",
+    "noFees": "Walang dagdag na bayad mula sa Hatod.",
+    "workWithUs": "May tindahan o motorsiklo ka ba?",
+    "workWithUsBody": "Ilista ang iyong tindahan o mag-deliver sa inyong bayan. Kausapin ang town coordinator para magsimula."
+  },
+  "auth": {
+    "title": "Mag-sign in gamit ang iyong mobile number",
+    "phoneLabel": "Mobile number",
+    "phoneHint": "Halimbawa: 0917 123 4567",
+    "sendCode": "Ipadala ang code",
+    "sending": "Ipinapadala…",
+    "codeSent": "Nagpadala kami ng 6-digit code sa {phone}.",
+    "codeLabel": "6-digit code",
+    "verify": "I-verify",
+    "verifying": "Sinusuri…",
+    "changeNumber": "Ibang number ang gamitin",
+    "resend": "Magpadala ng bagong code",
+    "emulatorHint": "Test mode: makikita ang code sa logs ng Auth emulator.",
+    "errors": {
+      "invalidPhone": "Maglagay ng tamang mobile number na nagsisimula sa 09.",
+      "invalidCode": "Mali o expired ang code. Subukang muli.",
+      "tooManyRequests": "Masyadong maraming subok. Maghintay ng ilang minuto.",
+      "network": "Walang signal. Suriin ang koneksyon at subukang muli.",
+      "generic": "May nangyaring mali. Pakisubukang muli."
+    }
+  },
+  "profile": {
+    "title": "Maligayang pagdating sa Hatod",
+    "intro": "Ilagay ang iyong pangalan para kilala ka ng tindahan at rider.",
+    "nameLabel": "Iyong pangalan",
+    "consent": "Sumasang-ayon ako sa <terms>Terms of Service</terms> at sa <privacy>Privacy Notice</privacy>.",
+    "consentRequired": "Pakisang-ayunan para magpatuloy.",
+    "submit": "Simulan ang Hatod",
+    "errors": {
+      "name_too_short": "Pakilagay ang iyong pangalan.",
+      "name_too_long": "Masyadong mahaba ang pangalan.",
+      "generic": "Hindi ma-save ang profile. Pakisubukang muli."
+    }
+  },
+  "gate": {
+    "signInNeeded": "Mag-sign in muna para magpatuloy.",
+    "notAllowedTitle": "Hindi para sa account mo ang pahinang ito",
+    "notAllowedBody": "Kausapin ang town coordinator kung kailangan mo ng access.",
+    "suspended": "Naka-suspend ang iyong account. Kausapin ang town coordinator."
+  },
+  "areas": {
+    "shop": { "title": "Aking tindahan", "body": "Dito aayusin ang menu, oras at mga order mo." },
+    "rider": { "title": "Rider", "body": "Dito ang iyong singil, lugar na sineserbisyuhan at mga delivery job." },
+    "coordinator": { "title": "Town coordinator", "body": "I-verify ang mga tindahan at rider, itala ang cash na bayad at asikasuhin ang mga report." },
+    "admin": { "title": "Admin", "body": "Pamahalaan ang mga bayan, plano, user at report." }
+  },
+  "admin": {
+    "roles": {
+      "title": "Mga role ng user",
+      "intro": "Hanapin ang tao gamit ang mobile number, saka piliin ang kanilang mga role.",
+      "search": "Hanapin",
+      "notFound": "Wala pang user na nag-sign up gamit ang number na iyan.",
+      "rolesLabel": "Mga role",
+      "coordTownsLabel": "Town ID ng coordinator (hiwalay sa kuwit)",
+      "saved": "Na-save ang mga role. Makikita ito ng tao sa loob ng isang minuto.",
+      "customerAlways": "Laging may customer role ang lahat.",
+      "errors": {
+        "cannot_remove_own_admin": "Hindi mo maaalis ang sarili mong admin role.",
+        "coord_towns_without_role": "Idagdag ang coordinator role para magtalaga ng bayan.",
+        "generic": "Hindi ma-save ang mga role."
+      }
+    },
+    "roleNames": {
+      "customer": "Customer",
+      "shop": "Tindahan",
+      "rider": "Rider",
+      "coordinator": "Coordinator",
+      "admin": "Admin"
+    }
+  },
+  "legal": {
+    "draftNotice": "Draft pa lamang. Susuriin ng abogado bago ilunsad.",
+    "terms": {
+      "title": "Terms of Service",
+      "p1": "Ang Hatod ay online na direktoryo at tool sa pag-order na nag-uugnay sa mga customer sa mga independent na tindahan at rider sa kanilang bayan.",
+      "p2": "Ang mga tindahan at rider ay sariling negosyo. Hindi sila empleyado o ahente ng Hatod. Hindi bahagi ang Hatod sa bentahan ng pagkain o sa delivery.",
+      "p3": "Direktang nagbabayad ang customer sa tindahan at rider. Hindi nangongolekta, humahawak o nagre-refund ang Hatod ng bayad sa order, at walang idinadagdag na singil.",
+      "p4": "Nagbabayad ng subscription sa Hatod ang mga tindahan at rider para mailista. Nakalathala sa app ang mga presyo.",
+      "p5": "Maaaring i-report sa app ang problema sa order. Maaaring i-suspend ng Hatod ang account na lumalabag sa mga tuntuning ito."
+    },
+    "privacy": {
+      "title": "Privacy Notice",
+      "p1": "Kinokolekta namin ang iyong pangalan, mobile number at mga naka-save na address para makapag-order ka at makontak tungkol sa order.",
+      "p2": "Ang address at number mo ay ibinabahagi lamang sa tindahan at rider na humahawak ng aktibo mong order.",
+      "p3": "Pribadong nakatago ang ID ng rider at makikita lamang ng rider, ng town coordinator at ng admin ng Hatod.",
+      "p4": "Ang live location ng rider ay itinatago lamang habang may delivery at binubura pagkalipas ng 30 araw.",
+      "p5": "Maaari kang humingi ng kopya ng iyong data o ipabura ito. Sumusunod ang notice na ito sa Data Privacy Act of 2012 (RA 10173)."
+    }
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "app": {
+    "name": "Hatod",
+    "tagline": "Order from shops in your town. Pick your rider. Pay them directly.",
+    "description": "Local delivery for small towns"
+  },
+  "nav": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "switchTo": "Switch to",
+    "language": "Language",
+    "menu": "Menu",
+    "areas": {
+      "customer": "Order food",
+      "shop": "My shop",
+      "rider": "Rider",
+      "coordinator": "Coordinator",
+      "admin": "Admin"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "continue": "Continue",
+    "back": "Back",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "comingSoon": "Coming in a later update.",
+    "goHome": "Go to home",
+    "tryAgain": "Try again"
+  },
+  "offline": {
+    "banner": "Waiting for signal. We will retry when you are back online.",
+    "back": "Back online."
+  },
+  "home": {
+    "title": "What would you like today?",
+    "intro": "Shops and riders in your town will show here soon.",
+    "howItWorks": "How Hatod works",
+    "step1": "Choose a shop and add food to your cart.",
+    "step2": "Pick a rider. You see their fee before you choose.",
+    "step3": "Pay the shop and the rider directly: cash, GCash or Maya.",
+    "noFees": "Hatod adds no fees to your order.",
+    "workWithUs": "Own a shop or a motorcycle?",
+    "workWithUsBody": "List your shop or offer deliveries in your town. Ask your town coordinator to get started."
+  },
+  "auth": {
+    "title": "Sign in with your mobile number",
+    "phoneLabel": "Mobile number",
+    "phoneHint": "Example: 0917 123 4567",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeSent": "We sent a 6-digit code to {phone}.",
+    "codeLabel": "6-digit code",
+    "verify": "Verify",
+    "verifying": "Checking…",
+    "changeNumber": "Use a different number",
+    "resend": "Send a new code",
+    "emulatorHint": "Test mode: find the code in the Auth emulator logs.",
+    "errors": {
+      "invalidPhone": "Enter a valid Philippine mobile number starting with 09.",
+      "invalidCode": "That code is wrong or expired. Try again.",
+      "tooManyRequests": "Too many tries. Wait a few minutes, then try again.",
+      "network": "No signal. Check your connection and try again.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "profile": {
+    "title": "Welcome to Hatod",
+    "intro": "Tell us your name so shops and riders know who they are serving.",
+    "nameLabel": "Your name",
+    "consent": "I agree to the <terms>Terms of Service</terms> and the <privacy>Privacy Notice</privacy>.",
+    "consentRequired": "Please agree to continue.",
+    "submit": "Start using Hatod",
+    "errors": {
+      "name_too_short": "Please enter your name.",
+      "name_too_long": "That name is too long.",
+      "generic": "We could not save your profile. Please try again."
+    }
+  },
+  "gate": {
+    "signInNeeded": "Please sign in to continue.",
+    "notAllowedTitle": "This page is not for your account",
+    "notAllowedBody": "Ask your town coordinator if you need access.",
+    "suspended": "Your account is suspended. Contact your town coordinator."
+  },
+  "areas": {
+    "shop": { "title": "My shop", "body": "Your menu, hours and orders will be managed here." },
+    "rider": { "title": "Rider", "body": "Your rate card, service area and delivery jobs will be here." },
+    "coordinator": { "title": "Town coordinator", "body": "Verify shops and riders, record cash payments and handle reports." },
+    "admin": { "title": "Admin", "body": "Manage towns, plans, users and reports." }
+  },
+  "admin": {
+    "roles": {
+      "title": "User roles",
+      "intro": "Find a person by mobile number, then choose their roles.",
+      "search": "Find",
+      "notFound": "No user with that number has signed up yet.",
+      "rolesLabel": "Roles",
+      "coordTownsLabel": "Coordinator town IDs (comma-separated)",
+      "saved": "Roles saved. The person sees the change within a minute.",
+      "customerAlways": "Everyone keeps the customer role.",
+      "errors": {
+        "cannot_remove_own_admin": "You cannot remove your own admin role.",
+        "coord_towns_without_role": "Add the coordinator role to assign towns.",
+        "generic": "Could not save roles."
+      }
+    },
+    "roleNames": {
+      "customer": "Customer",
+      "shop": "Shop",
+      "rider": "Rider",
+      "coordinator": "Coordinator",
+      "admin": "Admin"
+    }
+  },
+  "legal": {
+    "draftNotice": "Draft text. To be reviewed by a lawyer before launch.",
+    "terms": {
+      "title": "Terms of Service",
+      "p1": "Hatod is an online directory and ordering tool that connects customers with independent shops and independent riders in their town.",
+      "p2": "Shops and riders are independent businesses. They are not employees or agents of Hatod. Hatod is not a party to the sale of food or to the delivery.",
+      "p3": "Customers pay shops and riders directly. Hatod does not collect, hold or refund order payments, and adds no fees to orders.",
+      "p4": "Shops and riders pay Hatod a subscription to be listed. Prices are published on the app.",
+      "p5": "Problems with an order can be reported in the app. Hatod may suspend accounts that break these terms."
+    },
+    "privacy": {
+      "title": "Privacy Notice",
+      "p1": "We collect your name, mobile number and saved addresses so you can order and be reached about your order.",
+      "p2": "Your address and number are shared only with the shop and rider handling your active order.",
+      "p3": "Rider ID documents are stored privately and seen only by the rider, their town coordinator and Hatod admins.",
+      "p4": "Rider live location is kept only while a delivery is in progress and deleted after 30 days.",
+      "p5": "You can ask for a copy of your data or ask us to delete it. This notice follows the Data Privacy Act of 2012 (RA 10173)."
+    }
+  }
+}

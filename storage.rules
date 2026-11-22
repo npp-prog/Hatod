@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Hatod Storage rules. Closed by default; public shop/menu photos and private
+// rider/shop documents get their rules in M3 and M4.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

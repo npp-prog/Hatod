@@ -1,0 +1,15 @@
+# Firebase App Hosting config. Set the backend's root directory to apps/web.
+# Fill the values per environment (or override in the App Hosting console).
+runConfig:
+  minInstances: 0
+  maxInstances: 4
+  region: asia-southeast1
+env:
+  - variable: NEXT_PUBLIC_USE_EMULATORS
+    value: "false"
+  - variable: NEXT_PUBLIC_FUNCTIONS_REGION
+    value: asia-southeast1
+  # - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  #   value: hatod-prod
+  # - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+  #   value: ...

@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-This file is step 1 of the build brief. **No code will be written until this plan is approved.**
+Plan approved 2026-11-22 with the defaults below. Progress: **M1 done**.
 
 ---
 
@@ -108,7 +108,24 @@ Each milestone ends with: summary, how to test it, and a green test run (`npm te
 
 Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plans) lands in M2 and grows with each milestone so every flow is demo-able in the emulator.
 
-## 4. Open questions (need your answer before or during M1)
+## 4. Decisions (defaults taken at approval)
+
+| Question | Decision |
+|---|---|
+| Next.js version | Stay on **15.5** as the brief says. Moving to 16 can be a separate step later. |
+| Node for functions | **Node 22**. Node 20 reached end of life in April 2026, and firebase-admin 14 requires 22. |
+| Hosting | **Firebase App Hosting** (`apps/web/apphosting.yaml`), so everything stays in one Firebase project. |
+| OTP | **Firebase phone auth** for now. Switching to Semaphore with custom tokens is an option if SMS costs break the PHP 3,000/month ceiling. |
+| Rider Daily balance | Riders prepay a load balance; ₱5 comes off each day they go online; a zero balance cannot go online; unused balance is not refunded. |
+| Shop Basic | Shown in browse with Call and Messenger buttons only. No cart. |
+| Self-delivery fee | A flat fee the shop sets in its settings. |
+| Routing | Haversine × 1.3 fallback until an OpenRouteService key is added. |
+| SMS and payments | Mock providers until staging. |
+| Third language | `hil` and `ceb` locale codes are reserved for Phase 2. |
+| Seed town | Fictional demo town. |
+| Functions region | `asia-southeast1` (Singapore), the closest region to the Philippines. |
+
+### Original open questions (answered above)
 
 1. **Next.js version.** The brief pins Next.js 15. Next.js 16 is current as of now. Stay on 15 as written, or use the latest stable?
 2. **Hosting for Next.js.** Server-rendered Next.js on Firebase needs **Firebase App Hosting** (Blaze plan) or Vercel. Which do you prefer? Static export is possible but loses server rendering for shop pages.
