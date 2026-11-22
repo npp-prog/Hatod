@@ -67,7 +67,7 @@ async function main() {
   const { initializeApp } = await import('firebase-admin/app');
   const { getAuth } = await import('firebase-admin/auth');
   const { FieldValue, getFirestore } = await import('firebase-admin/firestore');
-  const { barangayId, endOfManilaDay, parseBarangayCsv, PRIVACY_VERSION, TERMS_VERSION } = await import('@hatod/shared');
+  const { barangayId, coarseLatLng, endOfManilaDay, menuSummary, parseBarangayCsv, PRIVACY_VERSION, TERMS_VERSION } = await import('@hatod/shared');
   const { readFileSync } = await import('node:fs');
   const { Timestamp } = await import('firebase-admin/firestore');
 
@@ -216,6 +216,11 @@ async function main() {
         updatedAt: now,
       });
     }
+    await db.doc(`shops/${sh.id}`).update({
+      menuSummary: menuSummary(
+        sh.items.map((it) => ({ name: it.name, category: it.category, price: it.price, available: it.available ?? true, variants: it.variants ?? [] })),
+      ),
+    });
   }
   console.log(`  Shops: ${SEED_SHOPS.filter((s) => s.verified).length} listed, ${SEED_SHOPS.filter((s) => !s.verified).length} waiting for verification`);
 
@@ -239,6 +244,8 @@ async function main() {
       online: r.online,
       rainOn: false,
       lastActiveAt: r.online ? now : null,
+      // online riders share a rough location (about 1 km) for "nearest" sorting
+      approxLocation: r.online && r.near ? coarseLatLng(r.near) : null,
       servedBarangayIds: r.serves.length ? r.serves.map(id) : allBarangays,
       maxKm: r.maxKm,
       rateCard: { ...r.rateCard, fixedFares: r.rateCard.fixedFares.map((f) => ({ fromBarangayId: id(f.from), toBarangayId: id(f.to), fee: f.fee })) },

@@ -5,6 +5,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { AppHeader } from '@/components/AppHeader';
 import { AuthProvider } from '@/components/AuthProvider';
+import { CartProvider } from '@/components/CartProvider';
+import { LowDataProvider } from '@/components/LowDataProvider';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { TownProvider } from '@/components/TownProvider';
 import { routing } from '@/i18n/routing';
@@ -50,9 +52,13 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <AuthProvider>
             <TownProvider>
-              <OfflineBanner />
-              <AppHeader />
-              <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
+              <LowDataProvider>
+                <CartProvider>
+                  <OfflineBanner />
+                  <AppHeader />
+                  <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
+                </CartProvider>
+              </LowDataProvider>
             </TownProvider>
           </AuthProvider>
         </NextIntlClientProvider>

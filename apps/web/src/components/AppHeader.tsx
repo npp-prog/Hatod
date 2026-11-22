@@ -3,7 +3,9 @@
 import { AREA_HOME, accessibleAreas, areaForPath } from '@hatod/shared';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { formatPHP, itemCount, itemsTotal } from '@hatod/shared';
 import { useAuth } from './AuthProvider';
+import { useCart } from './CartProvider';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function AppHeader() {
@@ -20,6 +22,7 @@ export function AppHeader() {
         <Link href="/" className="mr-auto flex min-h-12 items-center text-xl font-extrabold text-brand">
           {t('app.name')}
         </Link>
+        <CartButton />
         <LanguageSwitcher />
         {!loading &&
           (user ? (
@@ -57,5 +60,19 @@ export function AppHeader() {
         </nav>
       )}
     </header>
+  );
+}
+
+function CartButton() {
+  const t = useTranslations('nav');
+  const { cart } = useCart();
+  const count = itemCount(cart.lines);
+  if (count === 0) return null;
+  return (
+    <Link href="/cart" className="btn-primary gap-1 px-3" aria-label={t('cart', { count })}>
+      <span aria-hidden>🛒</span>
+      <span>{count}</span>
+      <span className="hidden sm:inline">· {formatPHP(itemsTotal(cart.lines))}</span>
+    </Link>
   );
 }

@@ -99,6 +99,12 @@ describe('rider edits', () => {
     await assertSucceeds(upd(r2(), 'r2', { rainOn: true }));
     await assertSucceeds(upd(r2(), 'r2', { online: false, lastActiveAt: serverTimestamp() }));
   });
+  it('an online rider may share a rough location, never a precise one, and not while offline', async () => {
+    await assertSucceeds(upd(r2(), 'r2', { online: true, lastActiveAt: serverTimestamp(), approxLocation: { lat: 11.11, lng: 122.64 } }));
+    await assertFails(upd(r2(), 'r2', { approxLocation: { lat: 11.10567, lng: 122.64321 } }));
+    await assertSucceeds(upd(r2(), 'r2', { online: false, lastActiveAt: serverTimestamp(), approxLocation: null }));
+    await assertFails(upd(r2(), 'r2', { approxLocation: { lat: 11.11, lng: 122.64 } }));
+  });
   it('going online must stamp the activity time', async () => {
     await assertFails(upd(r2(), 'r2', { online: true }));
   });

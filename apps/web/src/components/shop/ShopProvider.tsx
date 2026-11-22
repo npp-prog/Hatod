@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useAuth } from '@/components/AuthProvider';
 import { Spinner } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
-import { watchMenu, watchMyShop, type MenuItem, type Shop } from '@/lib/data/shops';
+import { refreshMenuSummary, watchMenu, watchMyShop, type MenuItem, type Shop } from '@/lib/data/shops';
 
 interface ShopState {
   shop: Shop;
@@ -31,6 +31,12 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     if (!shopId) return;
     return watchMenu(shopId, setMenu, () => setMenu([]));
   }, [shopId]);
+
+  // A menu without a summary (older data, or a refresh that failed offline) gets one.
+  const needsSummary = !!shop && !!menu && menu.length > 0 && shop.menuSummary?.itemCount !== menu.length;
+  useEffect(() => {
+    if (needsSummary && shopId) refreshMenuSummary(shopId);
+  }, [needsSummary, shopId]);
 
   if (shop === undefined) return <Spinner label={t('common.loading')} />;
   if (shop === null) {

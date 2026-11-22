@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M4 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M5 done**.
 
 ---
 
@@ -148,6 +148,18 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Online | Only a verified, active rider can switch online (enforced by rules). Auto-offline after 2 hours idle is a scheduled job in M6. |
 | Vehicle | Type, description and plate are locked after verification; the coordinator changes them. |
 | Bicycles | No plate, license or OR/CR required. |
+
+### Decisions made during M5
+
+| Topic | Decision |
+|---|---|
+| Dish search | A server-computed `menuSummary` on each shop (counts, lowest price, dish words) instead of loading every menu on the home screen. It is recomputed by the `refreshMenuSummary` function, which the shop app calls after menu changes. A Firestore trigger would be the usual choice, but trigger registration is blocked in this sandbox's emulator. The callable is equally correct and fully tested. |
+| "Nearest" rider | When a rider goes online the app shares their location rounded to about 1 km (rules enforce the rounding); it is cleared when they go offline. Shown as "~1.7 km from the shop". |
+| Cart | Kept on the phone (survives reloads and lost signal); one shop per order; re-checked against the live menu before checkout. |
+| Distance at checkout | Straight line × 1.3, labelled as an estimate. Road routing and fee locking happen on the server when the order is placed (M6). |
+| Shops with own rider | Skip rider selection; the shop's own delivery fee is used. |
+| Subscriptions | Until M9, every rider counts as subscribed (free trial). |
+| New-customer cap | Checked at checkout using `users.completedOrders` (maintained from M6); enforced again on the server in M6. |
 
 ### Original open questions (answered above)
 

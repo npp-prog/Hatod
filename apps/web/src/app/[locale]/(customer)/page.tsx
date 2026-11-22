@@ -2,6 +2,7 @@ import type { Locale } from '@hatod/shared';
 import { useTranslations } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { use } from 'react';
+import { ShopList } from '@/components/browse/ShopList';
 import { TownBanner } from '@/components/TownBanner';
 import { PageTitle } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
@@ -19,6 +20,7 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
         <p className="mt-2 text-muted">{t('intro')}</p>
       </div>
       <TownBanner />
+      <ShopList />
       <section className="card">
         <h2 className="text-lg font-bold">{t('howItWorks')}</h2>
         <ol className="mt-3 list-decimal space-y-2 pl-6">

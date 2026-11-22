@@ -71,6 +71,32 @@ describe('registerShop', () => {
     expect(claims.shops).toEqual([res.data.shopId]);
   });
 
+  it('keeps a menu summary on the shop when items change', async () => {
+    const s = await customer('+639173330007');
+    const res = await callable<unknown, { shopId: string }>(s.app, 'registerShop')(shop());
+    const items = adminDb.collection(`shops/${res.data.shopId}/menuItems`);
+    const base = { description: '', photoUrl: null, addOns: [], sortOrder: 1, createdAt: new Date(), updatedAt: new Date() };
+    await items.doc('a').set({ ...base, name: 'Pancit Canton', category: 'Noodles', price: 60, variants: [], available: true });
+    await items.doc('b').set({ ...base, name: 'Halo-halo', category: 'Desserts', price: 0, variants: [{ name: 'Regular', price: 55 }, { name: 'Special', price: 80 }], available: true });
+    await items.doc('c').set({ ...base, name: 'Leche flan', category: 'Desserts', price: 40, variants: [], available: false });
+    await s.user.getIdToken(true);
+    await callable(s.app, 'refreshMenuSummary')({ shopId: res.data.shopId });
+    const summary = (await adminDb.doc(`shops/${res.data.shopId}`).get()).get('menuSummary');
+    expect(summary).toMatchObject({ itemCount: 3, availableCount: 2, minPrice: 55 });
+    expect(summary!.searchTerms).toEqual(expect.arrayContaining(['pancit', 'halo', 'desserts', 'leche']));
+  });
+
+  it('only the owner can refresh a shop\'s menu summary', async () => {
+    const owner = await customer('+639173330008');
+    const res = await callable<unknown, { shopId: string }>(owner.app, 'registerShop')(shop());
+    const other = await customer('+639173330009');
+    await callable(other.app, 'registerShop')(shop());
+    await other.user.getIdToken(true);
+    await expect(callable(other.app, 'refreshMenuSummary')({ shopId: res.data.shopId })).rejects.toMatchObject({
+      code: 'functions/permission-denied',
+    });
+  });
+
   it('allows one shop per person', async () => {
     const s = await customer('+639173330002');
     await callable(s.app, 'registerShop')(shop());

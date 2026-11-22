@@ -1,6 +1,7 @@
 import type { LatLng } from '../geo';
 import type { WeeklyHours } from '../hours';
 import type { AddOn, Variant } from '../menu';
+import type { MenuSummary } from '../browse';
 import type { PaymentMethod, ShopCategory, VerificationStatus } from '../shops';
 import type { Timestamp } from './user';
 
@@ -39,6 +40,8 @@ export interface ShopDoc {
   planId: string | null;
   ratingAvg: number;
   ratingCount: number;
+  /** Written by a Cloud Function whenever the menu changes. */
+  menuSummary?: MenuSummary | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

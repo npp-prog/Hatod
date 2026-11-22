@@ -17,6 +17,8 @@ export interface SeedRider {
   ratingAvg: number;
   ratingCount: number;
   completedCount: number;
+  /** Where the rider waits when online (rounded to about 1 km when stored). */
+  near?: { lat: number; lng: number };
 }
 
 export const SEED_RIDERS: SeedRider[] = [
@@ -36,6 +38,7 @@ export const SEED_RIDERS: SeedRider[] = [
     ratingAvg: 4.8,
     ratingCount: 52,
     completedCount: 61,
+    near: { lat: 11.1049, lng: 122.6436 },
   },
   {
     uid: 'demo-shop-rider',
@@ -53,6 +56,7 @@ export const SEED_RIDERS: SeedRider[] = [
     ratingAvg: 4.5,
     ratingCount: 14,
     completedCount: 18,
+    near: { lat: 11.1187, lng: 122.6427 },
   },
   {
     uid: 'demo-rider-2',
@@ -80,6 +84,7 @@ export const SEED_RIDERS: SeedRider[] = [
     ratingAvg: 4.9,
     ratingCount: 88,
     completedCount: 102,
+    near: { lat: 11.0912, lng: 122.6476 },
   },
   {
     uid: 'demo-rider-3',

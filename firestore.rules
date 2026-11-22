@@ -200,7 +200,7 @@ service cloud.firestore {
 
       allow read: if isListed() || isRider() || isAdmin() || isCoordinatorOf(resource.data.townId);
       allow update: if isRider()
-        && changed().hasOnly(['photoUrl', 'vehicleType', 'vehicleDesc', 'plateNo', 'online', 'rainOn', 'lastActiveAt', 'updatedAt'])
+        && changed().hasOnly(['photoUrl', 'vehicleType', 'vehicleDesc', 'plateNo', 'online', 'rainOn', 'lastActiveAt', 'approxLocation', 'updatedAt'])
         && d().updatedAt == request.time
         // vehicle and plate are what the coordinator checked: locked after verification
         && (!changed().hasAny(['vehicleType', 'vehicleDesc', 'plateNo']) || resource.data.verified == false)
@@ -213,7 +213,12 @@ service cloud.firestore {
         && d().online is bool
         // only a verified, active rider can go online
         && (d().online == false || (resource.data.verified == true && resource.data.status == 'active'))
-        && (!changed().hasAny(['online', 'lastActiveAt']) || d().lastActiveAt == request.time);
+        && (!changed().hasAny(['online', 'lastActiveAt']) || d().lastActiveAt == request.time)
+        // approximate location: only while online, rounded to 2 decimals (about 1 km) for privacy
+        && (!('approxLocation' in d()) || d().approxLocation == null
+            || (d().online == true && isPhLatLng(d().approxLocation)
+                && math.abs(d().approxLocation.lat * 100 - math.round(d().approxLocation.lat * 100)) < 0.000001
+                && math.abs(d().approxLocation.lng * 100 - math.round(d().approxLocation.lng * 100)) < 0.000001));
       allow create, delete: if false;
 
       function riderData() { return get(/databases/$(database)/documents/riders/$(uid)).data; }

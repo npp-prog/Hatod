@@ -92,6 +92,18 @@ Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in t
   - Hatod adds nothing.
 - **Rate changes:** rates and the service area change only through Cloud Functions. After verification, rates can change once per 24 hours; before verification, any time.
 
+## Ordering (customer side)
+
+- **Home** (`/`): shops in the chosen town, open ones first, filterable by category. Search matches shop names and dishes ("adobo", "pandes"). A "Save data" switch hides photos; it turns on by itself when the phone's data saver is on.
+- **Shop page** (`/shops/{id}`): opening status, prep time, payment methods and the menu by category. Tapping an item opens a sheet for size, add-ons, quantity and a note. Sold-out items can't be added.
+- **Cart** (`/cart`): one shop per order, kept on the phone. Before checkout every line is re-checked against the live menu (removed, sold out, changed or re-priced).
+- **Checkout** (`/checkout`, sign-in required):
+  - The customer picks a saved address in the shop's town and how they will pay the shop.
+  - They choose a rider from the eligible ones, each with their own fee and a breakdown, sortable by price, rating or nearest. Shops with their own rider skip rider choice.
+  - A new customer's first 3 orders are capped at ₱1,000 of food.
+- **Distance** is estimated as straight line × 1.3 and labelled as an estimate. The server recomputes it and locks the fee when the order is placed (M6).
+- **Menu summary:** each shop keeps a server-computed `menuSummary` (counts, lowest price, dish words) that powers listing and search. The shop app asks the `refreshMenuSummary` function to recompute it after menu changes.
+
 ## Tests
 
 ```bash

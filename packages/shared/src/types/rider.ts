@@ -23,6 +23,8 @@ export interface RiderDoc {
   /** The rider's "it's raining" switch, which turns on their rain surcharge. */
   rainOn: boolean;
   lastActiveAt: Timestamp | null;
+  /** Rounded to about 1 km, set while online, cleared when offline. For "nearest" sorting only. */
+  approxLocation?: { lat: number; lng: number } | null;
   servedBarangayIds: string[];
   maxKm: number;
   rateCard: RateCard;
