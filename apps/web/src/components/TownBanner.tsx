@@ -31,9 +31,14 @@ export function TownBanner() {
         {t('town.change')}
       </Link>
       {user && !needsProfile && (
-        <Link href="/addresses" className="btn-secondary">
-          {t('nav.addresses')}
-        </Link>
+        <>
+          <Link href="/orders" className="btn-secondary">
+            {t('nav.orders')}
+          </Link>
+          <Link href="/addresses" className="btn-ghost">
+            {t('nav.addresses')}
+          </Link>
+        </>
       )}
     </section>
   );

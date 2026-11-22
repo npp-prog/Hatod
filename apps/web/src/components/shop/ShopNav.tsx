@@ -10,6 +10,7 @@ export function ShopNav() {
       label={t('home')}
       tabs={[
         { href: '/shop', text: t('home') },
+        { href: '/shop/orders', text: t('orders') },
         { href: '/shop/menu', text: t('menu') },
         { href: '/shop/hours', text: t('hours') },
         { href: '/shop/profile', text: t('profile') },

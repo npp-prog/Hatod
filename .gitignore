@@ -22,3 +22,4 @@ apps/web/public/swe-worker-*.js
 test-results/
 playwright-report/
 next-env.d.ts
+functions/.secret.local

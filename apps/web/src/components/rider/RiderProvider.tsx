@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useAuth } from '@/components/AuthProvider';
 import { Spinner } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
-import { watchRider, watchRiderPrivate, type Rider, type RiderPrivate } from '@/lib/data/riders';
+import { touchRider, watchRider, watchRiderPrivate, type Rider, type RiderPrivate } from '@/lib/data/riders';
 
 interface RiderState {
   rider: Rider;
@@ -29,6 +29,17 @@ export function RiderProvider({ children }: { children: ReactNode }) {
       b();
     };
   }, [user]);
+
+  // While the app is open and the rider is online, count that as activity
+  // (riders go offline by themselves after 2 hours without any).
+  const online = !!rider?.online;
+  const uid = rider?.id;
+  useEffect(() => {
+    if (!online || !uid) return;
+    touchRider(uid);
+    const id = setInterval(() => touchRider(uid), 10 * 60_000);
+    return () => clearInterval(id);
+  }, [online, uid]);
 
   if (rider === undefined) return <Spinner label={t('common.loading')} />;
   if (rider === null) {

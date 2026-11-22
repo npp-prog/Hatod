@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M5 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M6 done**.
 
 ---
 
@@ -160,6 +160,19 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Shops with own rider | Skip rider selection; the shop's own delivery fee is used. |
 | Subscriptions | Until M9, every rider counts as subscribed (free trial). |
 | New-customer cap | Checked at checkout using `users.completedOrders` (maintained from M6); enforced again on the server in M6. |
+
+### Decisions made during M6
+
+| Topic | Decision |
+|---|---|
+| Rider choice after a decline | The order goes back to "choosing a rider". Riders who declined or let the offer expire are excluded for that order. The fee is re-quoted for the new rider. |
+| Fee shown vs locked | The fee quoted at checkout is the one offered to the rider; it locks when the rider accepts. |
+| Cash orders | The rider collects the food money on delivery and hands it to the shop. The shop marks "food paid" (order rule: only the shop can). |
+| Order ids | `{customerUid}_{requestId}`: a retried request returns the same order. |
+| Timeouts | Scheduled sweep every minute in production; plus `nudgeOrder` from the apps when a countdown ends, so customers are not kept waiting up to a minute. |
+| Alert sound | Generated with Web Audio (nothing to download). Needs one tap to enable, as browsers require. |
+| Rider activity | An online rider's app counts as activity (refreshed every 10 minutes); riders go offline after 2 hours idle. |
+| Not yet | Late-cancel strikes (M7), subscription checks for riders (M9), masked phone numbers (Phase 2). |
 
 ### Original open questions (answered above)
 

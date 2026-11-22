@@ -249,6 +249,40 @@ service cloud.firestore {
       }
     }
 
+    // orders: written only by Cloud Functions. Readable by the people on the
+    // order (customer, shop owner, assigned rider), that town's coordinators
+    // and admins. Phone numbers on the order are therefore visible only to the
+    // parties of that order.
+    match /orders/{orderId} {
+      // Queries are checked against their filters, so each kind of list has its
+      // own clause: customerId == me, riderId == me, shopId in my shops.
+      allow read: if signedIn() && (
+        resource.data.customerId == request.auth.uid
+        || resource.data.riderId == request.auth.uid
+        || request.auth.uid in resource.data.participants
+        || resource.data.shopId in (request.auth.token.shops is list ? request.auth.token.shops : [])
+        || isAdmin()
+        || isCoordinatorOf(resource.data.townId));
+      allow write: if false;
+    }
+
+    // Job offers: only the rider they are for (no customer phone in them).
+    match /riderOffers/{offerId} {
+      allow read: if signedIn() && (resource.data.riderId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // Web push tokens a person registered on their own devices.
+    match /users/{uid}/devices/{token} {
+      allow read, delete: if isSelf(uid);
+      allow create, update: if isSelf(uid)
+        && request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt'])
+        && request.resource.data.token == token
+        && request.resource.data.token.size() < 400
+        && request.resource.data.platform is string && request.resource.data.platform.size() < 40
+        && request.resource.data.updatedAt == request.time;
+    }
+
     // Everything else is closed until its milestone adds a rule.
     match /{document=**} {
       allow read, write: if false;

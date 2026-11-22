@@ -15,14 +15,17 @@ import {
 } from '@hatod/shared';
 import { doc, getDoc } from 'firebase/firestore';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { useCart } from '@/components/CartProvider';
 import { useLowData } from '@/components/LowDataProvider';
 import { useTown } from '@/components/TownProvider';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { fetchOnlineRiders } from '@/lib/data/browse';
+import { placeOrder } from '@/lib/data/orders';
+import { callableMessage } from '@/lib/firebase/errors';
+import { orderErrorText } from '@/lib/orderErrors';
 import type { Rider } from '@/lib/data/riders';
 import { useAddresses } from '@/lib/data/useAddresses';
 import { useCartShop } from '@/lib/data/useCartShop';
@@ -34,7 +37,13 @@ export function Checkout() {
   const t = useTranslations('checkout');
   const tc = useTranslations();
   const { user } = useAuth();
-  const { cart, ready } = useCart();
+  const { cart, ready, clear } = useCart();
+  const router = useRouter();
+  const tOrders = useTranslations('orders');
+  // One id per checkout: a retry after lost signal returns the same order, never a second one.
+  const requestId = useRef<string>('');
+  if (!requestId.current) requestId.current = `r${crypto.randomUUID().replace(/-/g, '')}`;
+  const [placing, setPlacing] = useState(false);
   const { shop, issues } = useCartShop();
   const { addresses } = useAddresses();
   const { town } = useTown();
@@ -47,7 +56,7 @@ export function Checkout() {
   const [sort, setSort] = useState<RiderSort>('price');
   const [riderId, setRiderId] = useState<string | null>(null);
   const [completedOrders, setCompletedOrders] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const townAddresses = useMemo(() => (shop && addresses ? addresses.filter((a) => a.townId === shop.townId) : []), [shop, addresses]);
   const address = townAddresses.find((a) => a.id === addressId) ?? null;
@@ -114,6 +123,28 @@ export function Checkout() {
   const overCap = newCustomerCapExceeded(completedOrders, food);
   const cartProblems = issues.length > 0;
   const canPlace = !!address && !!payment && (shop.hasOwnRider || !!chosen) && status.open && !overCap && !cartProblems;
+
+  async function place() {
+    if (!address || !payment) return;
+    setPlacing(true);
+    setError(null);
+    try {
+      const { orderId } = await placeOrder({
+        requestId: requestId.current,
+        shopId: shop!.id,
+        lines: cart.lines.map((l) => ({ itemId: l.itemId, variant: l.variant, addOns: l.addOns, qty: l.qty, note: l.note })),
+        addressId: address.id,
+        paymentMethod: payment,
+        riderId: shop!.hasOwnRider ? null : riderId,
+      });
+      clear();
+      router.replace(`/orders/${orderId}`);
+    } catch (e) {
+      const code = callableMessage(e) ?? 'generic';
+      setError(orderErrorText(tOrders, code));
+      setPlacing(false);
+    }
+  }
 
   return (
     <div className="space-y-6 pb-8">
@@ -237,15 +268,11 @@ export function Checkout() {
       )}
       {overCap && <FieldError id="cap-error">{t('capWarning', { orders: NEW_CUSTOMER_ORDERS, cap: formatPHP(NEW_CUSTOMER_CAP) })}</FieldError>}
       {!shop.hasOwnRider && address && !chosen && options && options.length > 0 && <p className="text-muted">{t('chooseRiderFirst')}</p>}
-      {notice && (
-        <p role="status" className="card font-semibold">
-          {notice}
-        </p>
-      )}
+      {error && <FieldError id="place-error">{error}</FieldError>}
 
-      <button type="button" className="btn-primary w-full text-lg" disabled={!canPlace} onClick={() => setNotice(t('placeOrderSoon'))}>
-        {t('placeOrder')}
-        {canPlace && deliveryFee !== null ? ` · ${formatPHP(food + deliveryFee)}` : ''}
+      <button type="button" className="btn-primary w-full text-lg" disabled={!canPlace || placing} onClick={place}>
+        {placing ? tOrders('placing') : t('placeOrder')}
+        {!placing && canPlace && deliveryFee !== null ? ` · ${formatPHP(food + deliveryFee)}` : ''}
       </button>
     </div>
   );

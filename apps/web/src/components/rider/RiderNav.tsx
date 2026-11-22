@@ -10,6 +10,7 @@ export function RiderNav() {
       label={t('home')}
       tabs={[
         { href: '/rider', text: t('home') },
+        { href: '/rider/jobs', text: t('jobs') },
         { href: '/rider/rates', text: t('rates') },
         { href: '/rider/area', text: t('area') },
         { href: '/rider/profile', text: t('profile') },

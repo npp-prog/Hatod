@@ -25,7 +25,7 @@ See [PLAN.md](PLAN.md) for the milestone plan and decisions.
 
 ```bash
 npm install
-npm run dev          # builds functions, starts the emulators + Next.js dev server
+npm run dev          # builds functions, starts the emulators, the Next.js dev server and the order sweep
 npm run seed         # in a second terminal, once the emulators are up
 ```
 
@@ -103,6 +103,36 @@ Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in t
   - A new customer's first 3 orders are capped at ₱1,000 of food.
 - **Distance** is estimated as straight line × 1.3 and labelled as an estimate. The server recomputes it and locks the fee when the order is placed (M6).
 - **Menu summary:** each shop keeps a server-computed `menuSummary` (counts, lowest price, dish words) that powers listing and search. The shop app asks the `refreshMenuSummary` function to recompute it after menu changes.
+
+## Orders
+
+- **Order flow:**
+  - The customer places an order (with a chosen rider, unless the shop delivers itself).
+  - The shop accepts with a ready time or declines with a reason. It has 10 minutes before the order expires.
+  - The chosen rider gets a 60-second offer. If they decline or let it expire, the customer picks another rider; riders who said no are not offered again.
+  - The rider accepts, which locks the fee, then marks picked up and delivered. The customer confirms receipt, or the order completes by itself after 2 hours.
+- **Every status change goes through Cloud Functions** and the shared state machine (`packages/shared/src/orders.ts`). The apps never write orders.
+  - `placeOrder` re-prices everything from the menu, re-checks the rider and the new-customer cap, and is idempotent by `requestId`.
+  - Rider acceptance runs in a transaction, so two acceptances can never both win.
+- **Payments** are recorded, not handled. The shop marks "food paid" and the rider marks "fee collected". Customers see the shop's GCash/Maya QR and the rider's number for GCash.
+- **Screens:**
+  - Customer: `/orders` and `/orders/{id}` (live timeline, call/text, how to pay, choose another rider, cancel, received, order again).
+  - Shop: `/shop/orders` (rings while a new order waits; accept by ready time, decline by reason; ready, paid, cancel; pick up and deliver for shops that deliver themselves).
+  - Rider: `/rider/jobs` (offer with countdown and sound; active job with Google Maps/Waze, call/text, collect amounts; earnings).
+- **Notifications:**
+  - Web push to phones that turned it on (needs `NEXT_PUBLIC_FCM_VAPID_KEY`).
+  - SMS for new orders and job offers: `SMS_PROVIDER=semaphore` plus the `SEMAPHORE_API_KEY` secret. The default `console` provider logs messages and stores them in `smsOutbox`.
+- **Timeouts:** the `sweepOrders` function runs every minute in production. The emulator does not run scheduled functions, so `npm run dev` also runs `scripts/sweep-dev.ts` every 30 seconds. The apps also apply a timeout the moment a countdown hits zero (`nudgeOrder`).
+- **Road distance:** OpenRouteService when the `ORS_API_KEY` secret is set; otherwise straight line × 1.3, labelled as an estimate.
+
+Secrets for real projects:
+
+```bash
+firebase functions:secrets:set SEMAPHORE_API_KEY
+firebase functions:secrets:set ORS_API_KEY
+```
+
+For the emulator, copy `functions/.secret.local.example` to `functions/.secret.local`. Without it, you'll see harmless "secret not found" warnings and the fallbacks are used.
 
 ## Tests
 

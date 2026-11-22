@@ -10,7 +10,7 @@ const config = [
       // All user-facing text comes from messages/*.json (en, fil). No literal text in JSX.
       'react/jsx-no-literals': [
         'error',
-        { noStrings: false, ignoreProps: true, allowedStrings: ['·', '—', '•', '/', '+63', '₱', '*', '↑', '↓', '✕', '✓', '+', '−', '★', '🛒'] },
+        { noStrings: false, ignoreProps: true, allowedStrings: ['·', '—', '•', '/', '+63', '₱', '*', '↑', '↓', '✕', '✓', '+', '−', '★', '🛒', '🔔', '→'] },
       ],
     },
   },
