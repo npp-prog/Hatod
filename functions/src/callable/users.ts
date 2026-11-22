@@ -1,4 +1,4 @@
-import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 import { defineString } from 'firebase-functions/params';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import {
@@ -7,7 +7,8 @@ import {
   setUserRolesInput,
   type Role,
 } from '@hatod/shared';
-import { adminAuth, db } from '../lib/admin';
+import { db } from '../lib/admin';
+import { syncClaims } from '../lib/claims';
 import { logAdminAction } from '../lib/audit';
 import { parseInput, requireAuth, requireRole } from '../lib/guards';
 
@@ -20,15 +21,6 @@ function bootstrapAdminPhones(): Set<string> {
       .map((s) => s.trim())
       .filter(Boolean),
   );
-}
-
-/**
- * Sets custom claims and stamps claimsUpdatedAt on the user doc so the
- * signed-in client knows to refresh its ID token.
- */
-async function applyClaims(ref: DocumentReference, uid: string, roles: Role[], coordTowns: string[]) {
-  await adminAuth.setCustomUserClaims(uid, { roles, coordTowns });
-  await ref.update({ claimsUpdatedAt: Date.now() });
 }
 
 /**
@@ -62,6 +54,7 @@ export const completeProfile = onCall(async (req) => {
       phone: caller.phone,
       roles,
       coordTowns: [],
+      shopIds: [],
       defaultTownId: null,
       status: 'active',
       strikes: [],
@@ -79,7 +72,7 @@ export const completeProfile = onCall(async (req) => {
 
   const current = normalizeRoles((req.auth!.token as { roles?: unknown[] }).roles);
   if (result.created || current.join() !== result.roles.join()) {
-    await applyClaims(ref, caller.uid, result.roles, result.coordTowns);
+    await syncClaims(caller.uid);
   }
   return { roles: result.roles, created: result.created };
 });
@@ -127,6 +120,6 @@ export const setUserRoles = onCall(async (req) => {
     return prev;
   });
 
-  await applyClaims(ref, input.uid, roles, input.coordTowns);
+  await syncClaims(input.uid);
   return { roles, coordTowns: input.coordTowns, previousRoles: before.roles };
 });

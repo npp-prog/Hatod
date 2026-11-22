@@ -22,7 +22,7 @@ export interface AuthState {
   signOut: () => Promise<void>;
 }
 
-const EMPTY: HatodClaims = { roles: [], coordTowns: [] };
+const EMPTY: HatodClaims = { roles: [], coordTowns: [], shops: [] };
 
 const AuthContext = createContext<AuthState | null>(null);
 

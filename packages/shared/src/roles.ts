@@ -90,12 +90,12 @@ export interface HatodClaims {
   roles: Role[];
   /** Towns a coordinator manages. Empty for everyone else. */
   coordTowns?: string[];
+  /** Shops this person owns; lets Storage rules check ownership without a Firestore read. */
+  shops?: string[];
 }
 
 export function claimsFromToken(token: Record<string, unknown> | null | undefined): HatodClaims {
   const roles = normalizeRoles(Array.isArray(token?.roles) ? token.roles : []);
-  const coordTowns = Array.isArray(token?.coordTowns)
-    ? token.coordTowns.filter((t): t is string => typeof t === 'string')
-    : [];
-  return { roles, coordTowns };
+  const strings = (v: unknown) => (Array.isArray(v) ? v.filter((t): t is string => typeof t === 'string') : []);
+  return { roles, coordTowns: strings(token?.coordTowns), shops: strings(token?.shops) };
 }

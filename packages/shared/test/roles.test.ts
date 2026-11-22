@@ -85,11 +85,12 @@ describe('safeNextPath', () => {
 
 describe('claimsFromToken', () => {
   it('reads roles and coordinator towns defensively', () => {
-    expect(claimsFromToken({ roles: ['shop', 'bogus', 'customer'], coordTowns: ['t1', 2] })).toEqual({
+    expect(claimsFromToken({ roles: ['shop', 'bogus', 'customer'], coordTowns: ['t1', 2], shops: ['s1'] })).toEqual({
       roles: ['customer', 'shop'],
       coordTowns: ['t1'],
+      shops: ['s1'],
     });
-    expect(claimsFromToken({})).toEqual({ roles: [], coordTowns: [] });
-    expect(claimsFromToken(null)).toEqual({ roles: [], coordTowns: [] });
+    expect(claimsFromToken({})).toEqual({ roles: [], coordTowns: [], shops: [] });
+    expect(claimsFromToken(null)).toEqual({ roles: [], coordTowns: [], shops: [] });
   });
 });

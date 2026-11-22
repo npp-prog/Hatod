@@ -54,6 +54,10 @@ const PEOPLE: { uid: string; name: string; phone: string; roles: Role[]; coordTo
   { uid: 'demo-rider', name: 'Ramon Rider', phone: '+639170000004', roles: ['customer', 'rider'] },
   { uid: 'demo-customer', name: 'Carmen Customer', phone: '+639170000005', roles: ['customer'] },
   { uid: 'demo-shop-rider', name: 'Sonny Shop-Rider', phone: '+639170000006', roles: ['customer', 'shop', 'rider'] },
+  { uid: 'demo-owner-1', name: 'Pedro Panadero', phone: '+639170000011', roles: ['customer', 'shop'] },
+  { uid: 'demo-owner-2', name: 'Benjie Lechonero', phone: '+639170000012', roles: ['customer', 'shop'] },
+  { uid: 'demo-owner-3', name: 'Tomas Ihawan', phone: '+639170000013', roles: ['customer', 'shop'] },
+  { uid: 'demo-owner-4', name: 'Rosa Tindera', phone: '+639170000014', roles: ['customer', 'shop'] },
 ];
 
 async function main() {
@@ -101,6 +105,9 @@ async function main() {
   }
   console.log(`  Town: ${DEMO_TOWN.name} (live, ${rows.length} barangays) and ${NEW_TOWN.name} (not live)\n`);
 
+  const { SEED_SHOPS } = await import('./seed-shops');
+  const shopsByOwner = new Map(SEED_SHOPS.map((s) => [s.ownerUid, s.id]));
+
   for (const p of PEOPLE) {
     try {
       await auth.getUser(p.uid);
@@ -109,7 +116,8 @@ async function main() {
       await auth.createUser({ uid: p.uid, phoneNumber: p.phone, displayName: p.name });
     }
     const coordTowns = p.coordTowns ?? [];
-    await auth.setCustomUserClaims(p.uid, { roles: p.roles, coordTowns });
+    const shopIds = shopsByOwner.has(p.uid) ? [shopsByOwner.get(p.uid)!] : [];
+    await auth.setCustomUserClaims(p.uid, { roles: p.roles, coordTowns, shops: shopIds });
     const now = FieldValue.serverTimestamp();
     await db.doc(`users/${p.uid}`).set({
       uid: p.uid,
@@ -117,6 +125,7 @@ async function main() {
       phone: p.phone,
       roles: p.roles,
       coordTowns,
+      shopIds,
       defaultTownId: DEMO_TOWN_ID,
       status: 'active',
       strikes: [],
@@ -148,6 +157,64 @@ async function main() {
   await db.doc('addresses/demo-customer-work').set(
     addr('Work', 'Poblacion', 'Municipal hall, 2nd floor treasury office', 'Rizal St.', { lat: 11.1053, lng: 122.6432 }, false),
   );
+
+  // Shops and menus.
+  for (const sh of SEED_SHOPS) {
+    const now = FieldValue.serverTimestamp();
+    await db.doc(`shops/${sh.id}`).set({
+      ownerId: sh.ownerUid,
+      townId: DEMO_TOWN_ID,
+      name: sh.name,
+      category: sh.category,
+      description: sh.description,
+      contactPhone: sh.ownerPhone,
+      photos: [],
+      barangayId: barangayNames.get(sh.barangay)!,
+      barangayName: sh.barangay,
+      street: sh.street,
+      landmark: sh.landmark,
+      geo: sh.geo,
+      hours: sh.hours,
+      closedOn: null,
+      prepMinutes: sh.prepMinutes,
+      busyMinutes: 0,
+      paymentMethods: sh.paymentMethods,
+      gcashQrUrl: null,
+      mayaQrUrl: null,
+      hasOwnRider: sh.hasOwnRider,
+      selfDeliveryFee: sh.selfDeliveryFee,
+      menuCategories: sh.menuCategories,
+      verified: sh.verified,
+      verificationStatus: sh.verified ? 'approved' : 'pending',
+      status: 'active',
+      planId: null,
+      ratingAvg: 0,
+      ratingCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await db.doc(`shops/${sh.id}/private/info`).set({ ownerName: sh.ownerName, ownerPhone: sh.ownerPhone, permitPath: null, updatedAt: now });
+    const old = await db.collection(`shops/${sh.id}/menuItems`).get();
+    for (const d of old.docs) await d.ref.delete();
+    let order = 1;
+    for (const it of sh.items) {
+      const variants = it.variants ?? [];
+      await db.collection(`shops/${sh.id}/menuItems`).add({
+        name: it.name,
+        description: it.description ?? '',
+        category: it.category,
+        price: variants.length ? Math.min(...variants.map((v) => v.price)) : it.price,
+        photoUrl: null,
+        variants,
+        addOns: it.addOns ?? [],
+        available: it.available ?? true,
+        sortOrder: order++,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+  console.log(`  Shops: ${SEED_SHOPS.filter((s) => s.verified).length} listed, ${SEED_SHOPS.filter((s) => !s.verified).length} waiting for verification`);
 
   console.log('\nSeeded demo accounts. Sign in with any number above; the code shows in the emulator log.');
 }

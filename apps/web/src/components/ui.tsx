@@ -20,3 +20,19 @@ export function FieldError({ id, children }: { id: string; children: ReactNode }
     </p>
   );
 }
+
+/** Big, accessible on/off switch. */
+export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (on: boolean) => void; label?: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-9 w-16 shrink-0 items-center rounded-full transition-colors ${checked ? 'bg-brand' : 'bg-line'}`}
+    >
+      <span className={`inline-block size-7 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-8' : 'translate-x-1'}`} />
+    </button>
+  );
+}

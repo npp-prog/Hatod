@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1 done, M2 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1, M2, M3 done**.
 
 ---
 
@@ -124,6 +124,17 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Third language | `hil` and `ceb` locale codes are reserved for Phase 2. |
 | Seed town | Fictional demo town. |
 | Functions region | `asia-southeast1` (Singapore), the closest region to the Philippines. |
+
+### Decisions made during M3
+
+| Topic | Decision |
+|---|---|
+| Who registers a shop | Any signed-in person, self-serve; the shop stays hidden until a coordinator verifies it. One shop per person for the MVP. |
+| Storage ownership | Taken from login claims (`roles` + `shops`), not a Firestore lookup inside the Storage rules. This avoids a billed read on every upload and cross-service setup. Private files live under `private/towns/{town}/...` so coordinators are matched by town. |
+| Shop open/closed | Computed from hours, `closedOn` (today's date while "Closed today" is on) and Manila time, not stored as a flag. |
+| Sizes | An item has either no sizes or at least two; each size has its own full price. |
+| Rules depth | Rules check field types and limits but cannot loop over every time range or size price. The order function re-checks menu prices on the server in M6, so a bad price can never reach an order. |
+| Deferred | Shop Basic's 10-item limit is enforced with plans in M9. Registering shops in a town that is not live yet (pre-launch onboarding) is handled with the coordinator tools in M8. |
 
 ### Original open questions (answered above)
 

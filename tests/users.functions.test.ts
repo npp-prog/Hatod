@@ -74,6 +74,7 @@ describe('setUserRoles', () => {
     const claims = (await target.user.getIdTokenResult(true)).claims;
     expect(claims.roles).toEqual(['customer', 'coordinator']);
     expect(claims.coordTowns).toEqual(['town-demo']);
+    expect(claims.shops).toEqual([]);
 
     const log = await adminDb.collection('adminLog').where('targetId', '==', target.uid).get();
     expect(log.size).toBe(1);

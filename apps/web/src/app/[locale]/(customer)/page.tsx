@@ -4,6 +4,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { use } from 'react';
 import { TownBanner } from '@/components/TownBanner';
 import { PageTitle } from '@/components/ui';
+import { Link } from '@/i18n/navigation';
 
 /** Customer home. Public: anyone can browse. Shops and search arrive in M5. */
 export default function HomePage({ params }: { params: Promise<{ locale: string }> }) {
@@ -30,6 +31,9 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
       <section className="card">
         <h2 className="text-lg font-bold">{t('workWithUs')}</h2>
         <p className="mt-2 text-muted">{t('workWithUsBody')}</p>
+        <Link href="/register/shop" className="btn-secondary mt-4">
+          {t('registerShop')}
+        </Link>
       </section>
     </div>
   );

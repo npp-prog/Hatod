@@ -44,8 +44,9 @@ Emulator data is saved to `.emulator-data/` when you stop `npm run dev`. Use `np
 | 0917 000 0004 | Ramon Rider | customer, rider |
 | 0917 000 0005 | Carmen Customer | customer |
 | 0917 000 0006 | Sonny Shop-Rider | customer, shop, rider |
+| 0917 000 0011 to 0014 | Owners of the bakery, lechon, BBQ and sari-sari shops | customer, shop |
 
-The seed also creates **San Roque** (live, 10 barangays from `seed/demo-barangays.csv`), **Santa Monica** (not live yet, for testing what customers can't see), and two saved addresses for Carmen Customer. Both towns are fictional names placed on real terrain so the map has roads to pin on.
+The seed also creates **San Roque** (live, 10 barangays from `seed/demo-barangays.csv`), **Santa Monica** (not live yet, for testing what customers can't see), two saved addresses for Carmen Customer, and **6 shops with menus**: 5 verified and listed (carinderia, bakery, lechon manok with its own rider, late-night BBQ, sari-sari store) and Sonny's Milk Tea still waiting for verification. Both towns are fictional names placed on real terrain so the map has roads to pin on.
 
 Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in the emulator terminal and in the Emulator UI under **Authentication**. Any other PH mobile number creates a new customer account.
 
@@ -55,6 +56,20 @@ Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in t
 - **Barangays:** imported per town from a CSV with a header row `name,lat,lng`. Re-importing updates rows with the same name and never deletes, since saved addresses may point at a barangay. `seed/sample-new-town-barangays.csv` is a ready-made file to try.
 - **Addresses:** customers save up to 10 at `/addresses`. Each has a label, a barangay, an optional street/purok, a **required landmark** and a **map pin**. The pin starts at the barangay center and must be inside the town's radius. Addresses are written straight to Firestore by the phone, checked by the security rules, so they save offline and sync later.
 - **Map tiles:** the map uses OpenStreetMap's public tile server, which is fine for a pilot. At scale, switch to a paid tile provider or self-hosted tiles; the tile URL is in `apps/web/src/components/MapPicker.tsx`.
+
+## Shops
+
+- **Registering:** anyone signed in can register one shop at `/register/shop` (also linked from the home page). The shop is created **unverified** and hidden from customers until the town coordinator verifies it (M8). Registering adds the shop role, so the owner can set things up meanwhile.
+- **Shop area** (`/shop`):
+  - **Overview:** open/closed status, the "Closed today" switch (turns itself off the next day), "Busy" extra prep time, and a go-live checklist.
+  - **Menu:** categories (add, rename, reorder, delete), items with optional sizes (each with its own price) and add-ons, a photo, and a sold-out switch.
+  - **Hours:** up to 3 time ranges a day. A closing time earlier than the opening time runs past midnight.
+  - **Profile:** details, location, up to 3 photos, GCash/Maya QR codes and the business permit.
+- **Images** are shrunk on the phone to WebP (long side 1024 px, about 100 KB) before upload. The permit is private: only the owner, that town's coordinators and admins can open it.
+- **Who can change what:**
+  - The owner edits listing, menu and hours fields directly; the security rules list exactly which fields.
+  - Verification, status, plan and ratings change only through Cloud Functions.
+  - Storage ownership comes from login claims (`shops`), so the Storage rules never read Firestore.
 
 ## Tests
 

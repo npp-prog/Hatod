@@ -1,28 +1,16 @@
 'use client';
 
-import {
-  ADDRESS_LABEL_PRESETS,
-  ADDRESS_LIMITS,
-  addressInput,
-  isPinInTown,
-  MAX_ADDRESSES_PER_USER,
-  type LatLng,
-} from '@hatod/shared';
-import dynamic from 'next/dynamic';
+import { ADDRESS_LABEL_PRESETS, ADDRESS_LIMITS, addressInput, isPinInTown, MAX_ADDRESSES_PER_USER } from '@hatod/shared';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/AuthProvider';
+import { emptyLocation, LocationFields, type LocationValue } from '@/components/LocationFields';
 import { useTown } from '@/components/TownProvider';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
 import { Link, useRouter } from '@/i18n/navigation';
 import { saveAddress } from '@/lib/data/addresses';
 import { fetchBarangays, fetchTown, type Barangay, type Town } from '@/lib/data/places';
 import { useAddresses } from '@/lib/data/useAddresses';
-
-const MapPicker = dynamic(() => import('@/components/MapPicker'), {
-  ssr: false,
-  loading: () => <div className="h-72 w-full animate-pulse rounded-xl bg-line" aria-hidden />,
-});
 
 type FieldKey = 'label' | 'barangayId' | 'street' | 'landmark' | 'geo';
 type ErrorCode =
@@ -39,7 +27,6 @@ type ErrorCode =
 export function AddressForm({ id }: { id?: string }) {
   const t = useTranslations('addresses');
   const tc = useTranslations('common');
-  const tm = useTranslations('map');
   const router = useRouter();
   const { user } = useAuth();
   const { town: currentTown, loading: townLoading } = useTown();
@@ -51,14 +38,9 @@ export function AddressForm({ id }: { id?: string }) {
 
   const [preset, setPreset] = useState<(typeof ADDRESS_LABEL_PRESETS)[number]>('home');
   const [customLabel, setCustomLabel] = useState('');
-  const [barangayId, setBarangayId] = useState('');
-  const [street, setStreet] = useState('');
-  const [landmark, setLandmark] = useState('');
-  const [geo, setGeo] = useState<LatLng | null>(null);
-  const [pinMoved, setPinMoved] = useState(false);
+  const [loc, setLoc] = useState<LocationValue>(emptyLocation);
+  const { barangayId, street, landmark, geo } = loc;
   const [isDefault, setIsDefault] = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [locationFailed, setLocationFailed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<FieldKey | 'form', ErrorCode>>>({});
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -88,11 +70,7 @@ export function AddressForm({ id }: { id?: string }) {
       setPreset('other');
       setCustomLabel(editing.label);
     }
-    setBarangayId(editing.barangayId);
-    setStreet(editing.street);
-    setLandmark(editing.landmark);
-    setGeo(editing.geo);
-    setPinMoved(true);
+    setLoc({ barangayId: editing.barangayId, street: editing.street, landmark: editing.landmark, geo: editing.geo, pinMoved: true });
     setIsDefault(editing.isDefault);
     setLoaded(true);
   }, [editing, loaded, t]);
@@ -106,34 +84,6 @@ export function AddressForm({ id }: { id?: string }) {
   useEffect(() => clear('geo'), [geo]);
 
   const barangay = useMemo(() => barangays?.find((b) => b.id === barangayId) ?? null, [barangays, barangayId]);
-  const mapCenter = geo ?? barangay?.centroid ?? town?.center ?? null;
-
-  function pickBarangay(idValue: string) {
-    setBarangayId(idValue);
-    const b = barangays?.find((x) => x.id === idValue);
-    if (b && !pinMoved) setGeo(b.centroid);
-  }
-
-  function useMyLocation() {
-    if (!('geolocation' in navigator)) {
-      setLocationFailed(true);
-      return;
-    }
-    setLocating(true);
-    setLocationFailed(false);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setPinMoved(true);
-        setLocating(false);
-      },
-      () => {
-        setLocationFailed(true);
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-    );
-  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -241,90 +191,18 @@ export function AddressForm({ id }: { id?: string }) {
         {errors.label && <FieldError id="label-error">{errorText(errors.label)}</FieldError>}
       </fieldset>
 
-      <div className="card space-y-5">
-        <div>
-          <label htmlFor="barangay" className="label">
-            {t('barangayLabel')}
-          </label>
-          <select
-            id="barangay"
-            className="input"
-            value={barangayId}
-            onChange={(e) => pickBarangay(e.target.value)}
-            aria-invalid={!!errors.barangayId}
-            aria-describedby="barangay-error"
-          >
-            <option value="">{t('barangayPlaceholder')}</option>
-            {barangays.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-          {errors.barangayId && <FieldError id="barangay-error">{errorText(errors.barangayId)}</FieldError>}
-        </div>
-
-        <div>
-          <label htmlFor="landmark" className="label">
-            {t('landmarkLabel')}
-          </label>
-          <textarea
-            id="landmark"
-            className="input min-h-24 py-3"
-            maxLength={ADDRESS_LIMITS.landmarkMax}
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-            aria-invalid={!!errors.landmark}
-            aria-describedby="landmark-hint landmark-error"
-          />
-          <p id="landmark-hint" className="mt-1 text-muted">
-            {t('landmarkHint')}
-          </p>
-          {errors.landmark && <FieldError id="landmark-error">{errorText(errors.landmark)}</FieldError>}
-        </div>
-
-        <div>
-          <label htmlFor="street" className="label">
-            {t('streetLabel')}
-          </label>
-          <input
-            id="street"
-            className="input"
-            maxLength={ADDRESS_LIMITS.streetMax}
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            aria-describedby="street-hint"
-          />
-          <p id="street-hint" className="mt-1 text-muted">
-            {t('streetHint')}
-          </p>
-        </div>
-      </div>
-
-      <section className="card space-y-3" aria-labelledby="pin-title">
-        <h2 id="pin-title" className="label">
-          {t('pinLabel')}
-        </h2>
-        <p className="text-muted">{t('pinHint')}</p>
-        {mapCenter ? (
-          <MapPicker
-            center={mapCenter}
-            value={geo}
-            onChange={(p) => {
-              setGeo(p);
-              setPinMoved(true);
-            }}
-            label={t('pinMapLabel')}
-            attribution={tm('attribution')}
-          />
-        ) : null}
-        {geo && !pinMoved && <p className="text-muted">{t('pinFromBarangay')}</p>}
-        <button type="button" className="btn-secondary w-full" onClick={useMyLocation} disabled={locating}>
-          {locating ? t('locating') : t('useLocation')}
-        </button>
-        {locationFailed && <p role="alert">{t('locationFailed')}</p>}
-        {errors.geo && <FieldError id="geo-error">{errorText(errors.geo)}</FieldError>}
-      </section>
+      <LocationFields
+        town={town}
+        barangays={barangays}
+        value={loc}
+        onChange={setLoc}
+        errors={{
+          barangayId: errorText(errors.barangayId),
+          landmark: errorText(errors.landmark),
+          street: errorText(errors.street),
+          geo: errorText(errors.geo),
+        }}
+      />
 
       <label className="card flex min-h-12 items-center gap-3">
         <input

@@ -1,9 +1,38 @@
 rules_version = '2';
 
-// Hatod Storage rules. Closed by default; public shop/menu photos and private
-// rider/shop documents get their rules in M3 and M4.
+// Hatod Storage rules. Closed by default. Ownership comes from custom claims
+// (set by Cloud Functions), so these rules never read Firestore.
+//   shops/{shopId}/public/*                         shop photos, menu photos, GCash/Maya QR:
+//                                                   anyone reads; the owner writes small images.
+//   private/towns/{townId}/shops/{shopId}/*         business permit: the owner, that town's
+//                                                   coordinators and admins.
+// Rider documents get the same private pattern in M4.
 service firebase.storage {
   match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function claimList(name) {
+      return signedIn() && request.auth.token[name] is list ? request.auth.token[name] : [];
+    }
+    function isAdmin() { return 'admin' in claimList('roles'); }
+    function isCoordinatorOf(townId) { return 'coordinator' in claimList('roles') && townId in claimList('coordTowns'); }
+    function ownsShop(shopId) { return 'shop' in claimList('roles') && shopId in claimList('shops'); }
+
+    match /shops/{shopId}/public/{file} {
+      allow read: if true;
+      allow create, update: if ownsShop(shopId)
+        && request.resource.size <= 300 * 1024
+        && request.resource.contentType.matches('image/(webp|jpeg|png)');
+      allow delete: if ownsShop(shopId);
+    }
+
+    match /private/towns/{townId}/shops/{shopId}/{file} {
+      allow read: if ownsShop(shopId) || isAdmin() || isCoordinatorOf(townId);
+      allow create, update: if ownsShop(shopId)
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(webp|jpeg|png)|application/pdf');
+      allow delete: if ownsShop(shopId);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

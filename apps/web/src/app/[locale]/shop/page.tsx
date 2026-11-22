@@ -1,5 +1,5 @@
-import { AreaHome } from '@/components/AreaHome';
+import { ShopDashboard } from './ShopDashboard';
 
 export default function Page() {
-  return <AreaHome area="shop" />;
+  return <ShopDashboard />;
 }
