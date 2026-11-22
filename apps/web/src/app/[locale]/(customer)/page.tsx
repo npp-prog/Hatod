@@ -31,9 +31,14 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
       <section className="card">
         <h2 className="text-lg font-bold">{t('workWithUs')}</h2>
         <p className="mt-2 text-muted">{t('workWithUsBody')}</p>
-        <Link href="/register/shop" className="btn-secondary mt-4">
-          {t('registerShop')}
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/register/shop" className="btn-secondary">
+            {t('registerShop')}
+          </Link>
+          <Link href="/register/rider" className="btn-secondary">
+            {t('becomeRider')}
+          </Link>
+        </div>
       </section>
     </div>
   );

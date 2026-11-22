@@ -58,6 +58,9 @@ const PEOPLE: { uid: string; name: string; phone: string; roles: Role[]; coordTo
   { uid: 'demo-owner-2', name: 'Benjie Lechonero', phone: '+639170000012', roles: ['customer', 'shop'] },
   { uid: 'demo-owner-3', name: 'Tomas Ihawan', phone: '+639170000013', roles: ['customer', 'shop'] },
   { uid: 'demo-owner-4', name: 'Rosa Tindera', phone: '+639170000014', roles: ['customer', 'shop'] },
+  { uid: 'demo-rider-2', name: 'Jojo Habal-Habal', phone: '+639170000021', roles: ['customer', 'rider'] },
+  { uid: 'demo-rider-3', name: 'Bea Bisikleta', phone: '+639170000022', roles: ['customer', 'rider'] },
+  { uid: 'demo-rider-4', name: 'Nonoy Newbie', phone: '+639170000023', roles: ['customer', 'rider'] },
 ];
 
 async function main() {
@@ -215,6 +218,47 @@ async function main() {
     }
   }
   console.log(`  Shops: ${SEED_SHOPS.filter((s) => s.verified).length} listed, ${SEED_SHOPS.filter((s) => !s.verified).length} waiting for verification`);
+
+  // Riders.
+  const { SEED_RIDERS } = await import('./seed-riders');
+  const allBarangays = [...barangayNames.values()];
+  for (const r of SEED_RIDERS) {
+    const now = FieldValue.serverTimestamp();
+    const id = (name: string) => barangayNames.get(name)!;
+    await db.doc(`riders/${r.uid}`).set({
+      userId: r.uid,
+      townId: DEMO_TOWN_ID,
+      name: r.name,
+      photoUrl: null,
+      vehicleType: r.vehicleType,
+      vehicleDesc: r.vehicleDesc,
+      plateNo: r.plateNo,
+      verified: r.verified,
+      verificationStatus: r.verified ? 'approved' : 'pending',
+      status: 'active',
+      online: r.online,
+      rainOn: false,
+      lastActiveAt: r.online ? now : null,
+      servedBarangayIds: r.serves.length ? r.serves.map(id) : allBarangays,
+      maxKm: r.maxKm,
+      rateCard: { ...r.rateCard, fixedFares: r.rateCard.fixedFares.map((f) => ({ fromBarangayId: id(f.from), toBarangayId: id(f.to), fee: f.fee })) },
+      rateUpdatedAt: null,
+      planId: null,
+      ratingAvg: r.ratingAvg,
+      ratingCount: r.ratingCount,
+      completedCount: r.completedCount,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await db.doc(`riders/${r.uid}/private/info`).set({
+      legalName: r.name,
+      phone: r.phone,
+      emergencyContact: { name: 'Demo Contact', phone: '+639179999999', relation: 'Sibling' },
+      docs: { governmentId: null, license: null, orcr: null, clearance: null },
+      updatedAt: now,
+    });
+  }
+  console.log(`  Riders: ${SEED_RIDERS.filter((r) => r.verified).length} verified (${SEED_RIDERS.filter((r) => r.online).length} online), ${SEED_RIDERS.filter((r) => !r.verified).length} waiting for verification`);
 
   console.log('\nSeeded demo accounts. Sign in with any number above; the code shows in the emulator log.');
 }

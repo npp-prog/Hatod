@@ -45,8 +45,14 @@ Emulator data is saved to `.emulator-data/` when you stop `npm run dev`. Use `np
 | 0917 000 0005 | Carmen Customer | customer |
 | 0917 000 0006 | Sonny Shop-Rider | customer, shop, rider |
 | 0917 000 0011 to 0014 | Owners of the bakery, lechon, BBQ and sari-sari shops | customer, shop |
+| 0917 000 0021 to 0023 | Riders Jojo (fixed fares), Bea (bicycle) and Nonoy (pending) | customer, rider |
 
-The seed also creates **San Roque** (live, 10 barangays from `seed/demo-barangays.csv`), **Santa Monica** (not live yet, for testing what customers can't see), two saved addresses for Carmen Customer, and **6 shops with menus**: 5 verified and listed (carinderia, bakery, lechon manok with its own rider, late-night BBQ, sari-sari store) and Sonny's Milk Tea still waiting for verification. Both towns are fictional names placed on real terrain so the map has roads to pin on.
+The seed also creates **San Roque** (live, 10 barangays from `seed/demo-barangays.csv`), **Santa Monica** (not live yet, for testing what customers can't see), two saved addresses for Carmen Customer, and **6 shops with menus**: 5 verified and listed (carinderia, bakery, lechon manok with its own rider, late-night BBQ, sari-sari store) and Sonny's Milk Tea still waiting for verification. There are also **5 riders with different rate cards**:
+- Ramon: the plan's example card plus night and rain surcharges.
+- Sonny: cheap short trips in five barangays.
+- Jojo: habal-habal style fixed fares from the poblacion.
+- Bea: on a bicycle, 3 km range, currently offline.
+- Nonoy: waiting for verification. Both towns are fictional names placed on real terrain so the map has roads to pin on.
 
 Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in the emulator terminal and in the Emulator UI under **Authentication**. Any other PH mobile number creates a new customer account.
 
@@ -70,6 +76,21 @@ Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in t
   - The owner edits listing, menu and hours fields directly; the security rules list exactly which fields.
   - Verification, status, plan and ratings change only through Cloud Functions.
   - Storage ownership comes from login claims (`shops`), so the Storage rules never read Firestore.
+
+## Riders
+
+- **Signing up:** anyone signed in can sign up at `/register/rider` with their vehicle, plate number and an emergency contact. The rider record starts **unverified**: the town coordinator checks documents and the vehicle in person (M8).
+- **Rider area** (`/rider`):
+  - **Overview:** the Online switch (only after verification), the Raining switch, their record, and a checklist.
+  - **My rates:** base fee, per-km rate, minimum, night/rain/extra-stop surcharges and fixed barangay-to-barangay fares. A live preview shows exactly what a customer will pay.
+  - **Service area:** barangays served and the longest trip.
+  - **Profile:** photo, documents (ID, license, OR/CR, clearance; bicycles need no license or OR/CR), vehicle details (locked after verification) and emergency contact.
+- **Delivery fee** (`packages/shared/src/fees.ts`):
+  - **Distance:** road distance from shop to drop-off, rounded up to the next 0.5 km.
+  - **Price:** a fixed fare if the rider set one for those two barangays, otherwise `max(minimum, base + perKm × km)` rounded up to a whole peso.
+  - **Surcharges:** night (Manila time), rain (while switched on) and extra stops are added on top.
+  - Hatod adds nothing.
+- **Rate changes:** rates and the service area change only through Cloud Functions. After verification, rates can change once per 24 hours; before verification, any time.
 
 ## Tests
 

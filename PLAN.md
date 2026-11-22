@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1, M2, M3 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M4 done**.
 
 ---
 
@@ -135,6 +135,19 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Sizes | An item has either no sizes or at least two; each size has its own full price. |
 | Rules depth | Rules check field types and limits but cannot loop over every time range or size price. The order function re-checks menu prices on the server in M6, so a bad price can never reach an order. |
 | Deferred | Shop Basic's 10-item limit is enforced with plans in M9. Registering shops in a town that is not live yet (pre-launch onboarding) is handled with the coordinator tools in M8. |
+
+### Decisions made during M4
+
+| Topic | Decision |
+|---|---|
+| Rider record id | `riders/{uid}`, the rider's own user id: one rider profile per person, and rules and Storage paths can check ownership directly. |
+| Rate card changes | Through the `updateRateCard` function, which validates the whole card and enforces once per 24 hours after verification. Unlimited before verification so riders can set up. |
+| Fixed fares | Apply in both directions (Poblacion ↔ Mabini) and can be within one barangay. Surcharges still apply on top. |
+| Rounding | Distance up to the next 0.5 km; the distance charge up to a whole peso. |
+| Rain | A rider switch (`rainOn`) that turns on their own rain surcharge; it is not a rate change, so it is not limited. |
+| Online | Only a verified, active rider can switch online (enforced by rules). Auto-offline after 2 hours idle is a scheduled job in M6. |
+| Vehicle | Type, description and plate are locked after verification; the coordinator changes them. |
+| Bicycles | No plate, license or OR/CR required. |
 
 ### Original open questions (answered above)
 

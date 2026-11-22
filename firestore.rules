@@ -186,6 +186,64 @@ service cloud.firestore {
       }
     }
 
+    // riders/{uid}: the doc id is the rider's user id. Public once verified and
+    // active (customers choose riders by name, photo, vehicle, plate, rating
+    // and rate card). The rider edits their photo, switches and, until
+    // verified, their vehicle; rate card and service area go through Cloud
+    // Functions (validation and the 24-hour limit); verification, status,
+    // plan and ratings are written by functions only.
+    match /riders/{uid} {
+      function isRider() { return signedIn() && request.auth.uid == uid; }
+      function isListed() { return resource.data.verified == true && resource.data.status == 'active'; }
+      function d() { return request.resource.data; }
+      function changed() { return d().diff(resource.data).affectedKeys(); }
+
+      allow read: if isListed() || isRider() || isAdmin() || isCoordinatorOf(resource.data.townId);
+      allow update: if isRider()
+        && changed().hasOnly(['photoUrl', 'vehicleType', 'vehicleDesc', 'plateNo', 'online', 'rainOn', 'lastActiveAt', 'updatedAt'])
+        && d().updatedAt == request.time
+        // vehicle and plate are what the coordinator checked: locked after verification
+        && (!changed().hasAny(['vehicleType', 'vehicleDesc', 'plateNo']) || resource.data.verified == false)
+        && d().vehicleType in ['motorcycle', 'bicycle', 'tricycle']
+        && trimmedLen(d().vehicleDesc, 2, 60)
+        && d().plateNo is string && d().plateNo.size() <= 16
+        && (d().photoUrl == null || (d().photoUrl is string && d().photoUrl.size() < 1000
+            && d().photoUrl.matches('^https?://[^ ]+/o/riders%2F' + uid + '%2Fpublic%2F[^ ]+$')))
+        && d().rainOn is bool
+        && d().online is bool
+        // only a verified, active rider can go online
+        && (d().online == false || (resource.data.verified == true && resource.data.status == 'active'))
+        && (!changed().hasAny(['online', 'lastActiveAt']) || d().lastActiveAt == request.time);
+      allow create, delete: if false;
+
+      function riderData() { return get(/databases/$(database)/documents/riders/$(uid)).data; }
+
+      // Legal name, phone, emergency contact and document paths.
+      match /private/{docId} {
+        function docPathOk(p) {
+          return p == null || (p is string && p.matches('^private/towns/' + riderData().townId + '/riders/' + uid + '/[^/]+$'));
+        }
+        allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || isCoordinatorOf(riderData().townId));
+        allow update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['docs', 'emergencyContact', 'updatedAt'])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.docs is map
+          && request.resource.data.docs.keys().hasOnly(['governmentId', 'license', 'orcr', 'clearance'])
+          && request.resource.data.docs.keys().hasAll(['governmentId', 'license', 'orcr', 'clearance'])
+          && docPathOk(request.resource.data.docs.governmentId)
+          && docPathOk(request.resource.data.docs.license)
+          && docPathOk(request.resource.data.docs.orcr)
+          && docPathOk(request.resource.data.docs.clearance)
+          && request.resource.data.emergencyContact is map
+          && request.resource.data.emergencyContact.keys().hasOnly(['name', 'phone', 'relation'])
+          && trimmedLen(request.resource.data.emergencyContact.name, 2, 60)
+          && request.resource.data.emergencyContact.phone is string
+          && request.resource.data.emergencyContact.phone.matches('^\\+639[0-9]{9}$')
+          && trimmedLen(request.resource.data.emergencyContact.relation, 2, 30);
+        allow create, delete: if false;
+      }
+    }
+
     // Everything else is closed until its milestone adds a rule.
     match /{document=**} {
       allow read, write: if false;

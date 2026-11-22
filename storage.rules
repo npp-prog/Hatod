@@ -6,7 +6,9 @@ rules_version = '2';
 //                                                   anyone reads; the owner writes small images.
 //   private/towns/{townId}/shops/{shopId}/*         business permit: the owner, that town's
 //                                                   coordinators and admins.
-// Rider documents get the same private pattern in M4.
+//   riders/{uid}/public/*                           rider profile photo: anyone reads; the rider writes.
+//   private/towns/{townId}/riders/{uid}/*           ID, license, OR/CR, clearance: the rider,
+//                                                   that town's coordinators and admins.
 service firebase.storage {
   match /b/{bucket}/o {
     function signedIn() { return request.auth != null; }
@@ -31,6 +33,24 @@ service firebase.storage {
         && request.resource.size <= 5 * 1024 * 1024
         && request.resource.contentType.matches('image/(webp|jpeg|png)|application/pdf');
       allow delete: if ownsShop(shopId);
+    }
+
+    function isRider(uid) { return signedIn() && request.auth.uid == uid && 'rider' in claimList('roles'); }
+
+    match /riders/{uid}/public/{file} {
+      allow read: if true;
+      allow create, update: if isRider(uid)
+        && request.resource.size <= 300 * 1024
+        && request.resource.contentType.matches('image/(webp|jpeg|png)');
+      allow delete: if isRider(uid);
+    }
+
+    match /private/towns/{townId}/riders/{uid}/{file} {
+      allow read: if isRider(uid) || isAdmin() || isCoordinatorOf(townId);
+      allow create, update: if isRider(uid)
+        && request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(webp|jpeg|png)|application/pdf');
+      allow delete: if isRider(uid);
     }
 
     match /{allPaths=**} {

@@ -1,5 +1,5 @@
-import { AreaHome } from '@/components/AreaHome';
+import { RiderDashboard } from './RiderDashboard';
 
 export default function Page() {
-  return <AreaHome area="rider" />;
+  return <RiderDashboard />;
 }
