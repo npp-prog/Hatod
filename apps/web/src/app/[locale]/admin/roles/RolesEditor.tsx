@@ -16,7 +16,7 @@ interface Found {
   coordTowns: string[];
 }
 
-const KNOWN_ERRORS = new Set(['cannot_remove_own_admin', 'coord_towns_without_role']);
+const KNOWN_ERRORS = new Set(['cannot_remove_own_admin', 'coord_towns_without_role', 'unknown_town']);
 
 /** Admin tool: look up a user by mobile number and set their roles (setUserRoles callable). */
 export function RolesEditor() {

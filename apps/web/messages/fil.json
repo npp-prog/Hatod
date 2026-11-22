@@ -16,7 +16,8 @@
       "rider": "Rider",
       "coordinator": "Coordinator",
       "admin": "Admin"
-    }
+    },
+    "addresses": "Aking mga address"
   },
   "common": {
     "loading": "Naglo-load…",
@@ -85,10 +86,22 @@
     "suspended": "Naka-suspend ang iyong account. Kausapin ang town coordinator."
   },
   "areas": {
-    "shop": { "title": "Aking tindahan", "body": "Dito aayusin ang menu, oras at mga order mo." },
-    "rider": { "title": "Rider", "body": "Dito ang iyong singil, lugar na sineserbisyuhan at mga delivery job." },
-    "coordinator": { "title": "Town coordinator", "body": "I-verify ang mga tindahan at rider, itala ang cash na bayad at asikasuhin ang mga report." },
-    "admin": { "title": "Admin", "body": "Pamahalaan ang mga bayan, plano, user at report." }
+    "shop": {
+      "title": "Aking tindahan",
+      "body": "Dito aayusin ang menu, oras at mga order mo."
+    },
+    "rider": {
+      "title": "Rider",
+      "body": "Dito ang iyong singil, lugar na sineserbisyuhan at mga delivery job."
+    },
+    "coordinator": {
+      "title": "Town coordinator",
+      "body": "I-verify ang mga tindahan at rider, itala ang cash na bayad at asikasuhin ang mga report."
+    },
+    "admin": {
+      "title": "Admin",
+      "body": "Pamahalaan ang mga bayan, plano, user at report."
+    }
   },
   "admin": {
     "roles": {
@@ -103,7 +116,8 @@
       "errors": {
         "cannot_remove_own_admin": "Hindi mo maaalis ang sarili mong admin role.",
         "coord_towns_without_role": "Idagdag ang coordinator role para magtalaga ng bayan.",
-        "generic": "Hindi ma-save ang mga role."
+        "generic": "Hindi ma-save ang mga role.",
+        "unknown_town": "May town ID na hindi umiiral."
       }
     },
     "roleNames": {
@@ -112,6 +126,56 @@
       "rider": "Rider",
       "coordinator": "Coordinator",
       "admin": "Admin"
+    },
+    "towns": {
+      "title": "Mga bayan",
+      "intro": "Magdagdag ng bayan, itakda ang tier at trial, at mag-import ng barangay.",
+      "add": "Magdagdag ng bayan",
+      "empty": "Wala pang bayan.",
+      "live": "Bukas",
+      "notLive": "Hindi pa bukas",
+      "tier": "Tier {tier}",
+      "barangayCount": "{count, plural, =0 {Walang barangay} one {# barangay} other {# barangay}}",
+      "nameLabel": "Bayan o lungsod",
+      "provinceLabel": "Probinsya",
+      "tierLabel": "Tier ng presyo",
+      "isLiveLabel": "Bukas (puwedeng piliin ng customer)",
+      "trialLabel": "Katapusan ng libreng trial (oras sa Pilipinas)",
+      "centerLabel": "Gitna ng bayan",
+      "centerHint": "I-tap ang mapa sa plaza o munisipyo.",
+      "radiusLabel": "Layo ng serbisyo (km)",
+      "radiusHint": "Tatanggihan ang pin na mas malayo rito mula sa gitna.",
+      "save": "I-save ang bayan",
+      "created": "Nagawa ang bayan.",
+      "updated": "Na-save ang bayan.",
+      "editTitle": "I-edit ang bayan",
+      "barangaysTitle": "Mga barangay",
+      "importTitle": "Mag-import ng barangay mula sa CSV",
+      "importHint": "Isang barangay bawat linya, may header: name,lat,lng. Ina-update ang barangay na may parehong pangalan; walang binubura.",
+      "importFile": "Pumili ng CSV file",
+      "importPaste": "O i-paste ang CSV dito",
+      "importButton": "I-import",
+      "importing": "Ini-import…",
+      "importResult": "{created} naidagdag, {updated} na-update.",
+      "importIssues": "Nilaktawang linya:",
+      "issue": "Linya {line}: {problem}",
+      "issueCodes": {
+        "missing_header": "kailangan ng header: name,lat,lng",
+        "bad_columns": "kulang ang column",
+        "empty_name": "walang pangalan",
+        "name_too_long": "masyadong mahaba ang pangalan",
+        "bad_coordinates": "walang latitude/longitude o nasa labas ng Pilipinas",
+        "duplicate_name": "dalawang beses lumabas ang pangalan",
+        "too_many_rows": "sobra sa 300 linya; hindi na binasa ang iba"
+      },
+      "errors": {
+        "town_exists": "Mayroon nang ganitong bayan.",
+        "town_name_required": "Ilagay ang pangalan ng bayan.",
+        "province_required": "Ilagay ang probinsya.",
+        "outside_philippines": "I-tap ang mapa para itakda ang gitna ng bayan.",
+        "bad_date": "Gamitin ang date picker.",
+        "generic": "Hindi ma-save. Pakisubukang muli."
+      }
     }
   },
   "legal": {
@@ -132,5 +196,70 @@
       "p4": "Ang live location ng rider ay itinatago lamang habang may delivery at binubura pagkalipas ng 30 araw.",
       "p5": "Maaari kang humingi ng kopya ng iyong data o ipabura ito. Sumusunod ang notice na ito sa Data Privacy Act of 2012 (RA 10173)."
     }
+  },
+  "town": {
+    "deliveringIn": "Umoorder sa {town}",
+    "change": "Palitan ang bayan",
+    "chooseTitle": "Piliin ang iyong bayan",
+    "chooseIntro": "Isang bayan sa bawat pagkakataon ang Hatod. Piliin kung saan ipapadala ang pagkain.",
+    "none": "Wala pang bayan na bukas ang Hatod. Bumalik ulit sa susunod.",
+    "pickPrompt": "Piliin ang iyong bayan para makita ang mga tindahan malapit sa iyo.",
+    "pick": "Pumili ng bayan",
+    "selected": "Napili",
+    "province": "{province}"
+  },
+  "addresses": {
+    "title": "Aking mga address",
+    "intro": "Hinahanap ka ng rider gamit ang barangay, landmark at pin sa mapa.",
+    "empty": "Wala pang naka-save na address.",
+    "add": "Magdagdag ng address",
+    "edit": "I-edit ang address",
+    "newTitle": "Bagong address",
+    "default": "Default",
+    "makeDefault": "Gawing default",
+    "delete": "Burahin",
+    "confirmDelete": "Burahin ang address na ito?",
+    "limitReached": "Hanggang {max} address lang ang puwede. Magbura muna para makadagdag.",
+    "otherTown": "Nasa ibang bayan",
+    "needTown": "Piliin muna ang iyong bayan.",
+    "labelLabel": "Pangalan",
+    "labelPresets": {
+      "home": "Bahay",
+      "work": "Trabaho",
+      "other": "Iba pa"
+    },
+    "customLabel": "Pangalanan ang lugar",
+    "barangayLabel": "Barangay",
+    "barangayPlaceholder": "Pumili ng barangay",
+    "streetLabel": "Kalye, purok o sitio (opsyonal)",
+    "streetHint": "Halimbawa: Purok 3, Rizal St.",
+    "landmarkLabel": "Landmark",
+    "landmarkHint": "Ano ang makikita ng rider? Halimbawa: asul na gate tabi ng kapilya, tapat ng sari-sari store.",
+    "pinLabel": "I-pin ang iyong lokasyon",
+    "pinHint": "I-tap ang mapa kung saan hihinto ang rider. Puwedeng i-drag ang pin.",
+    "pinMapLabel": "Mapa. I-tap para ilagay ang pin ng delivery.",
+    "useLocation": "Gamitin ang kasalukuyang lokasyon",
+    "locating": "Hinahanap ka…",
+    "locationFailed": "Hindi makuha ang lokasyon mo. I-tap na lang ang mapa.",
+    "pinFromBarangay": "Nagsisimula ang pin sa gitna ng barangay. Ilipat ito sa eksaktong lugar mo.",
+    "mapOffline": "Kailangan ng signal ang mapa. Gagamitin muna ang gitna ng barangay hanggang ilipat mo ang pin.",
+    "setDefault": "Gawing default na address",
+    "saved": "Na-save ang address.",
+    "queued": "Naka-save sa phone na ito. Isi-sync pagbalik ng signal.",
+    "deleted": "Nabura ang address.",
+    "errors": {
+      "label_required": "Pangalanan ang address na ito.",
+      "label_too_long": "Masyadong mahaba ang pangalan.",
+      "barangay_required": "Pumili ng barangay.",
+      "street_too_long": "Masyadong mahaba.",
+      "landmark_required": "Maglagay ng landmark para mahanap ka ng rider.",
+      "landmark_too_long": "Paikliin ang landmark.",
+      "pin_outside_town": "Nasa labas ng {town} ang pin. Ilipat ito sa loob ng bayan.",
+      "generic": "Hindi ma-save ang address. Pakisubukang muli.",
+      "pin_required": "I-tap ang mapa para i-pin kung saan hihinto ang rider."
+    }
+  },
+  "map": {
+    "attribution": "· Map pin ng Hatod"
   }
 }

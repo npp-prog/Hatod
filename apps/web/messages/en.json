@@ -16,7 +16,8 @@
       "rider": "Rider",
       "coordinator": "Coordinator",
       "admin": "Admin"
-    }
+    },
+    "addresses": "My addresses"
   },
   "common": {
     "loading": "Loading…",
@@ -85,10 +86,22 @@
     "suspended": "Your account is suspended. Contact your town coordinator."
   },
   "areas": {
-    "shop": { "title": "My shop", "body": "Your menu, hours and orders will be managed here." },
-    "rider": { "title": "Rider", "body": "Your rate card, service area and delivery jobs will be here." },
-    "coordinator": { "title": "Town coordinator", "body": "Verify shops and riders, record cash payments and handle reports." },
-    "admin": { "title": "Admin", "body": "Manage towns, plans, users and reports." }
+    "shop": {
+      "title": "My shop",
+      "body": "Your menu, hours and orders will be managed here."
+    },
+    "rider": {
+      "title": "Rider",
+      "body": "Your rate card, service area and delivery jobs will be here."
+    },
+    "coordinator": {
+      "title": "Town coordinator",
+      "body": "Verify shops and riders, record cash payments and handle reports."
+    },
+    "admin": {
+      "title": "Admin",
+      "body": "Manage towns, plans, users and reports."
+    }
   },
   "admin": {
     "roles": {
@@ -103,7 +116,8 @@
       "errors": {
         "cannot_remove_own_admin": "You cannot remove your own admin role.",
         "coord_towns_without_role": "Add the coordinator role to assign towns.",
-        "generic": "Could not save roles."
+        "generic": "Could not save roles.",
+        "unknown_town": "One of those town IDs does not exist."
       }
     },
     "roleNames": {
@@ -112,6 +126,56 @@
       "rider": "Rider",
       "coordinator": "Coordinator",
       "admin": "Admin"
+    },
+    "towns": {
+      "title": "Towns",
+      "intro": "Add launch towns, set their tier and trial, and import barangays.",
+      "add": "Add town",
+      "empty": "No towns yet.",
+      "live": "Live",
+      "notLive": "Not live",
+      "tier": "Tier {tier}",
+      "barangayCount": "{count, plural, =0 {No barangays} one {# barangay} other {# barangays}}",
+      "nameLabel": "Town or city",
+      "provinceLabel": "Province",
+      "tierLabel": "Price tier",
+      "isLiveLabel": "Live (customers can choose this town)",
+      "trialLabel": "Free trial ends (Philippine time)",
+      "centerLabel": "Town center",
+      "centerHint": "Tap the map at the town plaza or municipal hall.",
+      "radiusLabel": "Service radius (km)",
+      "radiusHint": "Delivery pins farther than this from the center are refused.",
+      "save": "Save town",
+      "created": "Town created.",
+      "updated": "Town saved.",
+      "editTitle": "Edit town",
+      "barangaysTitle": "Barangays",
+      "importTitle": "Import barangays from CSV",
+      "importHint": "One barangay per line with a header row: name,lat,lng. Existing barangays with the same name are updated; none are deleted.",
+      "importFile": "Choose a CSV file",
+      "importPaste": "Or paste CSV here",
+      "importButton": "Import",
+      "importing": "Importing…",
+      "importResult": "{created} added, {updated} updated.",
+      "importIssues": "Skipped lines:",
+      "issue": "Line {line}: {problem}",
+      "issueCodes": {
+        "missing_header": "needs a header row: name,lat,lng",
+        "bad_columns": "missing columns",
+        "empty_name": "no name",
+        "name_too_long": "name is too long",
+        "bad_coordinates": "latitude/longitude missing or outside the Philippines",
+        "duplicate_name": "same name appears twice",
+        "too_many_rows": "too many rows (max 300); the rest were not read"
+      },
+      "errors": {
+        "town_exists": "That town already exists.",
+        "town_name_required": "Enter the town name.",
+        "province_required": "Enter the province.",
+        "outside_philippines": "Tap the map to set the town center.",
+        "bad_date": "Use the date picker.",
+        "generic": "Could not save. Please try again."
+      }
     }
   },
   "legal": {
@@ -132,5 +196,70 @@
       "p4": "Rider live location is kept only while a delivery is in progress and deleted after 30 days.",
       "p5": "You can ask for a copy of your data or ask us to delete it. This notice follows the Data Privacy Act of 2012 (RA 10173)."
     }
+  },
+  "town": {
+    "deliveringIn": "Ordering in {town}",
+    "change": "Change town",
+    "chooseTitle": "Choose your town",
+    "chooseIntro": "Hatod works one town at a time. Pick where you want food delivered.",
+    "none": "Hatod is not live in any town yet. Check back soon.",
+    "pickPrompt": "Choose your town to see shops near you.",
+    "pick": "Choose town",
+    "selected": "Selected",
+    "province": "{province}"
+  },
+  "addresses": {
+    "title": "My addresses",
+    "intro": "Riders find you by barangay, landmark and map pin.",
+    "empty": "No saved addresses yet.",
+    "add": "Add address",
+    "edit": "Edit address",
+    "newTitle": "New address",
+    "default": "Default",
+    "makeDefault": "Make default",
+    "delete": "Delete",
+    "confirmDelete": "Delete this address?",
+    "limitReached": "You can save up to {max} addresses. Delete one to add another.",
+    "otherTown": "In another town",
+    "needTown": "Choose your town first.",
+    "labelLabel": "Label",
+    "labelPresets": {
+      "home": "Home",
+      "work": "Work",
+      "other": "Other"
+    },
+    "customLabel": "Name this place",
+    "barangayLabel": "Barangay",
+    "barangayPlaceholder": "Choose barangay",
+    "streetLabel": "Street, purok or sitio (optional)",
+    "streetHint": "Example: Purok 3, Rizal St.",
+    "landmarkLabel": "Landmark",
+    "landmarkHint": "What can the rider see? Example: blue gate beside the chapel, across the sari-sari store.",
+    "pinLabel": "Pin your location",
+    "pinHint": "Tap the map where the rider should stop. You can drag the pin.",
+    "pinMapLabel": "Map. Tap to place the delivery pin.",
+    "useLocation": "Use my current location",
+    "locating": "Finding you…",
+    "locationFailed": "Could not get your location. Tap the map instead.",
+    "pinFromBarangay": "The pin starts at the barangay center. Move it to your exact spot.",
+    "mapOffline": "The map needs signal. Your address will use the barangay center until you move the pin.",
+    "setDefault": "Use as my default address",
+    "saved": "Address saved.",
+    "queued": "Saved on this phone. It will sync when you have signal.",
+    "deleted": "Address deleted.",
+    "errors": {
+      "label_required": "Give this address a name.",
+      "label_too_long": "That name is too long.",
+      "barangay_required": "Choose a barangay.",
+      "street_too_long": "That is too long.",
+      "landmark_required": "Add a landmark so the rider can find you.",
+      "landmark_too_long": "Please shorten the landmark.",
+      "pin_outside_town": "The pin is outside {town}. Move it inside the town.",
+      "generic": "Could not save the address. Please try again.",
+      "pin_required": "Tap the map to pin where the rider should stop."
+    }
+  },
+  "map": {
+    "attribution": "· Map pin by Hatod"
   }
 }

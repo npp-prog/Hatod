@@ -8,6 +8,7 @@ import {
   type Role,
 } from '@hatod/shared';
 import { adminAuth, db } from '../lib/admin';
+import { logAdminAction } from '../lib/audit';
 import { parseInput, requireAuth, requireRole } from '../lib/guards';
 
 const ADMIN_PHONES = defineString('ADMIN_PHONES', { default: '' });
@@ -96,15 +97,32 @@ export const setUserRoles = onCall(async (req) => {
   const before = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpsError('not-found', 'user_not_found');
-    const prev = { roles: snap.get('roles') ?? [], coordTowns: snap.get('coordTowns') ?? [] };
+    const prev = {
+      roles: (snap.get('roles') as string[] | undefined) ?? [],
+      coordTowns: (snap.get('coordTowns') as string[] | undefined) ?? [],
+    };
+
+    // Keep towns/{id}.coordinatorIds in step with the user's coordinator towns.
+    const next = new Set(input.coordTowns);
+    const added = input.coordTowns.filter((t) => !prev.coordTowns.includes(t));
+    const removed = prev.coordTowns.filter((t) => !next.has(t));
+    const addedRefs = added.map((t) => db.collection('towns').doc(t));
+    const addedSnaps = addedRefs.length ? await tx.getAll(...addedRefs) : [];
+    const missing = addedSnaps.filter((s) => !s.exists).map((s) => s.id);
+    if (missing.length) throw new HttpsError('failed-precondition', 'unknown_town', { towns: missing });
+    for (const r of addedRefs) tx.update(r, { coordinatorIds: FieldValue.arrayUnion(input.uid) });
+    for (const t of removed) {
+      // set+merge so a since-deleted town does not fail the whole update
+      tx.set(db.collection('towns').doc(t), { coordinatorIds: FieldValue.arrayRemove(input.uid) }, { merge: true });
+    }
+
     tx.update(ref, { roles, coordTowns: input.coordTowns, updatedAt: FieldValue.serverTimestamp() });
-    tx.create(db.collection('adminLog').doc(), {
+    logAdminAction(tx, {
       action: 'setUserRoles',
       actorId: caller.uid,
       targetId: input.uid,
       before: prev,
       after: { roles, coordTowns: input.coordTowns },
-      createdAt: FieldValue.serverTimestamp(),
     });
     return prev;
   });

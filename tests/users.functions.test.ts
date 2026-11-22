@@ -60,6 +60,7 @@ describe('setUserRoles', () => {
     await adminAuth.setCustomUserClaims(admin.uid, { roles: ['customer', 'admin'] });
     await admin.user.getIdToken(true);
 
+    await adminDb.doc('towns/town-demo').set({ name: 'Demo', province: 'Demo', isLive: false, coordinatorIds: [] });
     const target = await signInAsPhoneUser('+639171110011');
     await callable(target.app, 'completeProfile')(profile('Coordinator Lito'));
 
@@ -76,6 +77,21 @@ describe('setUserRoles', () => {
 
     const log = await adminDb.collection('adminLog').where('targetId', '==', target.uid).get();
     expect(log.size).toBe(1);
+    expect((await adminDb.doc('towns/town-demo').get()).get('coordinatorIds')).toContain(target.uid);
+
+    // Removing the coordinator role takes them off the town again.
+    await callable(admin.app, 'setUserRoles')({ uid: target.uid, roles: ['customer'] });
+    expect((await adminDb.doc('towns/town-demo').get()).get('coordinatorIds')).not.toContain(target.uid);
+  });
+
+  it('refuses coordinator towns that do not exist', async () => {
+    const admin = await signInAsPhoneUser('+639171110014');
+    await adminDb.doc(`users/${admin.uid}`).set({ roles: ['customer', 'admin'] });
+    await adminAuth.setCustomUserClaims(admin.uid, { roles: ['customer', 'admin'] });
+    await admin.user.getIdToken(true);
+    await expect(
+      callable(admin.app, 'setUserRoles')({ uid: admin.uid, roles: ['customer', 'admin', 'coordinator'], coordTowns: ['nowhere'] }),
+    ).rejects.toMatchObject({ code: 'functions/failed-precondition' });
   });
 
   it('refuses non-admins', async () => {

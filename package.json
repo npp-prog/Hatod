@@ -19,7 +19,7 @@
     "build": "npm run build -w @hatod/functions && npm run build -w @hatod/web",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tests.json",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test -w @hatod/shared",
+    "test": "npm run test -w @hatod/shared -w @hatod/web",
     "test:emulator": "npm run build -w @hatod/functions && firebase emulators:exec --project demo-hatod --only auth,firestore,functions,storage \"vitest run --config vitest.emulator.config.ts\"",
     "test:all": "npm test && npm run test:emulator"
   },

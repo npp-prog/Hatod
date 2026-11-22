@@ -45,12 +45,21 @@ Emulator data is saved to `.emulator-data/` when you stop `npm run dev`. Use `np
 | 0917 000 0005 | Carmen Customer | customer |
 | 0917 000 0006 | Sonny Shop-Rider | customer, shop, rider |
 
+The seed also creates **San Roque** (live, 10 barangays from `seed/demo-barangays.csv`), **Santa Monica** (not live yet, for testing what customers can't see), and two saved addresses for Carmen Customer. Both towns are fictional names placed on real terrain so the map has roads to pin on.
+
 Sign in with any of these numbers. No SMS is sent: the 6-digit code appears in the emulator terminal and in the Emulator UI under **Authentication**. Any other PH mobile number creates a new customer account.
+
+## Towns, barangays and addresses
+
+- **Towns:** admins add them at `/admin/towns`. Each town has a tier (A/B/C, which sets plan prices later), a free-trial end date (Philippine time), a center point and a service radius. Customers only see towns marked **Live**.
+- **Barangays:** imported per town from a CSV with a header row `name,lat,lng`. Re-importing updates rows with the same name and never deletes, since saved addresses may point at a barangay. `seed/sample-new-town-barangays.csv` is a ready-made file to try.
+- **Addresses:** customers save up to 10 at `/addresses`. Each has a label, a barangay, an optional street/purok, a **required landmark** and a **map pin**. The pin starts at the barangay center and must be inside the town's radius. Addresses are written straight to Firestore by the phone, checked by the security rules, so they save offline and sync later.
+- **Map tiles:** the map uses OpenStreetMap's public tile server, which is fine for a pilot. At scale, switch to a paid tile provider or self-hosted tiles; the tile URL is in `apps/web/src/components/MapPicker.tsx`.
 
 ## Tests
 
 ```bash
-npm test               # shared business logic (Vitest, no emulators needed)
+npm test               # shared business logic + translation checks (Vitest, no emulators needed)
 npm run test:emulator  # Firestore rules + callable functions inside the emulators
 npm run test:all       # both
 npm run typecheck      # all workspaces

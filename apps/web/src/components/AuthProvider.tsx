@@ -1,10 +1,14 @@
 'use client';
 
 import { claimsFromToken, type HatodClaims } from '@hatod/shared';
-import { onIdTokenChanged, signOut as fbSignOut, type User } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { firebase } from '@/lib/firebase/client';
+
+// The Firebase SDK is large. It is loaded after the first paint so the home
+// page shows immediately on slow phones and weak signal.
+const loadClient = () => import('@/lib/firebase/client');
+const loadAuth = () => import('firebase/auth');
+const loadFirestore = () => import('firebase/firestore');
 
 export interface AuthState {
   /** true until Firebase has told us whether someone is signed in. */
@@ -30,39 +34,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthState['status']>(null);
 
   useEffect(() => {
-    const { auth } = firebase();
-    return onIdTokenChanged(auth, async (u) => {
-      setUser(u);
-      if (!u) {
-        setClaims(EMPTY);
-        setStatus(null);
+    let unsub: (() => void) | undefined;
+    let cancelled = false;
+    void Promise.all([loadClient(), loadAuth()]).then(([{ firebase }, { onIdTokenChanged }]) => {
+      if (cancelled) return;
+      unsub = onIdTokenChanged(firebase().auth, async (u) => {
+        setUser(u);
+        if (!u) {
+          setClaims(EMPTY);
+          setStatus(null);
+          setLoading(false);
+          return;
+        }
+        const token = await u.getIdTokenResult();
+        setClaims(claimsFromToken(token.claims));
+        setIssuedAt(Date.parse(token.issuedAtTime));
         setLoading(false);
-        return;
-      }
-      const token = await u.getIdTokenResult();
-      setClaims(claimsFromToken(token.claims));
-      setIssuedAt(Date.parse(token.issuedAtTime));
-      setLoading(false);
+      });
     });
+    return () => {
+      cancelled = true;
+      unsub?.();
+    };
   }, []);
 
   // Roles change on the server (setUserRoles). The function stamps
   // claimsUpdatedAt on the user doc; when it is newer than our token, refresh.
   useEffect(() => {
     if (!user) return;
-    const { db } = firebase();
-    return onSnapshot(
-      doc(db, 'users', user.uid),
-      (snap) => {
-        if (!snap.exists()) return;
-        setStatus((snap.get('status') as AuthState['status']) ?? 'active');
-        const updated = snap.get('claimsUpdatedAt');
-        if (typeof updated === 'number' && updated > issuedAt) void user.getIdToken(true);
-      },
-      () => {
-        /* No profile yet or offline: claims from the token still apply. */
-      },
-    );
+    let unsub: (() => void) | undefined;
+    let cancelled = false;
+    void Promise.all([loadClient(), loadFirestore()]).then(([{ firebase }, { doc, onSnapshot }]) => {
+      if (cancelled) return;
+      unsub = onSnapshot(
+        doc(firebase().db, 'users', user.uid),
+        (snap) => {
+          if (!snap.exists()) return;
+          setStatus((snap.get('status') as AuthState['status']) ?? 'active');
+          const updated = snap.get('claimsUpdatedAt');
+          if (typeof updated === 'number' && updated > issuedAt) void user.getIdToken(true);
+        },
+        () => {
+          /* No profile yet or offline: claims from the token still apply. */
+        },
+      );
+    });
+    return () => {
+      cancelled = true;
+      unsub?.();
+    };
   }, [user, issuedAt]);
 
   const refreshClaims = useCallback(async () => {
@@ -70,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const signOut = useCallback(async () => {
+    const [{ firebase }, { signOut: fbSignOut }] = await Promise.all([loadClient(), loadAuth()]);
     await fbSignOut(firebase().auth);
   }, []);
 

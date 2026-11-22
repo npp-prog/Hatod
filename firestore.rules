@@ -12,18 +12,84 @@ service cloud.firestore {
     function hasRole(r) { return r in roles(); }
     function isAdmin() { return hasRole('admin'); }
     function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function coordTowns() {
+      return hasRole('coordinator') && request.auth.token.coordTowns is list ? request.auth.token.coordTowns : [];
+    }
+    function isCoordinatorOf(townId) { return townId in coordTowns(); }
 
-    // users/{uid}: profile, roles and status. Created and changed by the
-    // completeProfile / setUserRoles functions only.
+    function isPhLatLng(p) {
+      return p is map && p.keys().hasOnly(['lat', 'lng']) && p.keys().hasAll(['lat', 'lng'])
+        && p.lat is number && p.lng is number
+        && p.lat >= 4.2 && p.lat <= 21.5 && p.lng >= 116.0 && p.lng <= 127.0;
+    }
+    function trimmedLen(s, min, max) { return s is string && s.trim().size() >= min && s.size() <= max; }
+
+    // users/{uid}: profile, roles and status. Roles, status and consent are
+    // changed by Cloud Functions only. A user may change their own town and
+    // language preference.
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
-      allow write: if false;
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['defaultTownId', 'locale', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time
+        && (request.resource.data.defaultTownId == null
+            || (request.resource.data.defaultTownId is string
+                && exists(/databases/$(database)/documents/towns/$(request.resource.data.defaultTownId))))
+        && request.resource.data.locale in ['en', 'fil'];
+      allow create, delete: if false;
     }
 
     // Admin audit trail.
     match /adminLog/{id} {
       allow read: if isAdmin();
       allow write: if false;
+    }
+
+    // towns: live towns are public (town picker); admins and that town's
+    // coordinators also see towns that are not live yet. Written by admin functions.
+    match /towns/{townId} {
+      allow read: if resource.data.isLive == true || isAdmin() || isCoordinatorOf(townId);
+      allow write: if false;
+    }
+
+    // barangays: public names and centroids. Written by admin functions.
+    match /barangays/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // addresses: a customer's own saved addresses, written directly by the
+    // client so they work offline. The barangay must belong to the address town.
+    match /addresses/{id} {
+      function barangayMatches(d) {
+        let b = get(/databases/$(database)/documents/barangays/$(d.barangayId)).data;
+        return b.townId == d.townId && b.name == d.barangayName;
+      }
+      function validAddress(d) {
+        return d.keys().hasOnly(['userId', 'townId', 'label', 'barangayId', 'barangayName', 'street', 'landmark', 'geo', 'isDefault', 'createdAt', 'updatedAt'])
+          && d.keys().hasAll(['userId', 'townId', 'label', 'barangayId', 'barangayName', 'street', 'landmark', 'geo', 'isDefault', 'createdAt', 'updatedAt'])
+          && trimmedLen(d.label, 1, 30)
+          && d.street is string && d.street.size() <= 120
+          && trimmedLen(d.landmark, 3, 200)
+          && isPhLatLng(d.geo)
+          && d.isDefault is bool
+          && d.townId is string
+          && d.barangayId is string
+          && barangayMatches(d)
+          && d.updatedAt == request.time;
+      }
+
+      allow read: if signedIn() && resource.data.userId == request.auth.uid;
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && validAddress(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validAddress(request.resource.data);
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Everything else is closed until its milestone adds a rule.

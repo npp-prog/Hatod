@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1 done, M2 done**.
 
 ---
 

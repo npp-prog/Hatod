@@ -3,12 +3,17 @@ import { AreaHome } from '@/components/AreaHome';
 import { Link } from '@/i18n/navigation';
 
 export default function Page() {
-  const t = useTranslations('admin.roles');
+  const t = useTranslations('admin');
   return (
     <AreaHome area="admin">
-      <Link href="/admin/roles" className="btn-secondary">
-        {t('title')}
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link href="/admin/towns" className="btn-secondary">
+          {t('towns.title')}
+        </Link>
+        <Link href="/admin/roles" className="btn-secondary">
+          {t('roles.title')}
+        </Link>
+      </div>
     </AreaHome>
   );
 }
