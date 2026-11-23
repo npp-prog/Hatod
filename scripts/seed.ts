@@ -80,6 +80,8 @@ async function main() {
   // Towns and barangays first: coordinators and addresses point at them.
   const trialEndsAt = Timestamp.fromDate(endOfManilaDay('2027-03-31'));
   const coordinatorIds = PEOPLE.filter((p) => p.coordTowns?.includes(DEMO_TOWN_ID)).map((p) => p.uid);
+  // The rules only accept image URLs from this bucket.
+  await db.doc('config/app').set({ storageBucket: process.env.STORAGE_BUCKET ?? `${process.env.GCLOUD_PROJECT ?? 'demo-hatod'}.appspot.com` });
   await db.doc(`towns/${DEMO_TOWN_ID}`).set({
     ...DEMO_TOWN,
     trialEndsAt,
@@ -312,7 +314,27 @@ async function main() {
         shopPhone: shop.ownerPhone,
         items: [{ itemId: 'x', name: item.name, variant: item.variants?.[0]?.name ?? null, addOns: [], qty: 1, note: '', unitPrice: price }],
         itemsTotal: price,
+        pickup: { geo: shop.geo, landmark: shop.landmark, barangayName: shop.barangay },
+        dropoff: { label: 'Home', barangayId: barangayNames.get('Poblacion')!, barangayName: 'Poblacion', street: '', landmark: 'Near the plaza', geo: { lat: 11.1052, lng: 122.6441 } },
+        paymentMethod: 'cash',
+        chosenRiderId: riderId,
+        rider: null,
+        declinedRiderIds: [],
+        offerId: null,
+        distanceKm: 1.5,
+        distanceEstimate: true,
         deliveryFee: 40,
+        feeBreakdown: null,
+        feeLocked: status === 'COMPLETED',
+        declineReason: null,
+        cancelReason: status === 'CANCELLED' ? 'changed_mind' : null,
+        cancelledBy: status === 'CANCELLED' ? 'customer' : null,
+        readyAt: null,
+        ready: status === 'COMPLETED',
+        shopPaid: status === 'COMPLETED',
+        riderPaid: status === 'COMPLETED',
+        expiresAt: null,
+        deliveredAt: status === 'COMPLETED' ? Ts.fromMillis(placedAt + 35 * 60_000) : null,
         status,
         riderId,
         selfDelivery: shop.hasOwnRider,

@@ -34,7 +34,10 @@
   },
   "offline": {
     "banner": "Waiting for signal. We will retry when you are back online.",
-    "back": "Back online."
+    "back": "Back online.",
+    "pageTitle": "No signal",
+    "pageBody": "This page is not saved on your phone yet. Pages you opened before, like menus and your orders, still work. We will load this one when the signal is back.",
+    "tryAgain": "Try again"
   },
   "home": {
     "title": "What would you like today?",
@@ -871,7 +874,8 @@
       "order_expired": "This order expired.",
       "generic": "Something went wrong. Check your signal and try again.",
       "account_not_active": "Your account is suspended. Contact your town coordinator.",
-      "shop_basic_no_orders": "This shop takes orders by call or text only."
+      "shop_basic_no_orders": "This shop takes orders by call or text only.",
+      "no_signal": "No signal. Your tap did not go through. Try again when you are back online."
     }
   },
   "shopOrders": {
@@ -1235,7 +1239,8 @@
       "receipt_already_used": "That receipt number was already recorded.",
       "receipt_required": "Enter the receipt number.",
       "bad_receipt": "Use letters, numbers and dashes only.",
-      "generic": "Could not record. Please try again."
+      "generic": "Could not record. Please try again.",
+      "not_your_own": "Another coordinator or an admin must record payments for your own account."
     },
     "conversion": "Paying now",
     "plansTitle": "Plans and prices",

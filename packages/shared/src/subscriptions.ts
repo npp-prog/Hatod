@@ -57,6 +57,8 @@ export interface SubscriptionDoc {
   currentPeriodEnd: number | null;
   /** Prepaid pesos (rider daily plan). */
   balance: number;
+  /** Pesos of paid time parked while on free Basic; turned back into time on a paid plan. */
+  credit?: number;
   /** Manila date the daily fee was last charged. */
   lastChargedDate: string | null;
   /** When the status will next change by itself (for the daily sweep). */
@@ -74,6 +76,8 @@ export interface PaymentRecord {
   recordedBy: string | null;
   kind: 'period' | 'topup';
   periods: number;
+  /** Plan the payment was priced for (online checkouts); the plan may have changed before it arrived. */
+  planCode?: PlanCode;
   at: number;
 }
 
@@ -85,6 +89,55 @@ export function periodMs(period: PlanPeriod): number {
 /** New paid-until after paying n periods: from today if lapsed, else from the current end. */
 export function extendPeriod(currentEnd: number | null, now: number, period: PlanPeriod, periods: number): number {
   return Math.max(currentEnd ?? 0, now) + periodMs(period) * periods;
+}
+
+export interface PlanPrice {
+  code: PlanCode;
+  price: number;
+  period: PlanPeriod;
+}
+
+/** Pesos' worth of paid time not used yet (time after the trial counts; the trial is free). */
+export function paidValueLeft(sub: Pick<SubscriptionDoc, 'currentPeriodEnd' | 'trialEndsAt' | 'credit'>, plan: PlanPrice, now: number): number {
+  const credit = sub.credit ?? 0;
+  if (sub.currentPeriodEnd === null || plan.price === 0 || plan.code === 'rider_daily') return credit;
+  const left = Math.max(0, sub.currentPeriodEnd - Math.max(now, sub.trialEndsAt));
+  return credit + (left / periodMs(plan.period)) * plan.price;
+}
+
+/**
+ * Puts `value` pesos onto a plan: prepaid load for Rider Daily, parked
+ * credit on free Basic, otherwise paid time at that plan's price.
+ */
+export function creditValue(
+  sub: Pick<SubscriptionDoc, 'currentPeriodEnd' | 'trialEndsAt' | 'balance' | 'credit'>,
+  plan: PlanPrice,
+  value: number,
+  now: number,
+): Pick<SubscriptionDoc, 'currentPeriodEnd' | 'balance' | 'credit'> {
+  if (value <= 0) return { currentPeriodEnd: sub.currentPeriodEnd, balance: sub.balance, credit: sub.credit ?? 0 };
+  if (plan.code === 'rider_daily') return { currentPeriodEnd: sub.currentPeriodEnd, balance: sub.balance + Math.floor(value), credit: 0 };
+  if (plan.price === 0) return { currentPeriodEnd: sub.currentPeriodEnd, balance: sub.balance, credit: value };
+  const from = Math.max(sub.currentPeriodEnd ?? 0, now, sub.trialEndsAt);
+  return { currentPeriodEnd: Math.round(from + (value / plan.price) * periodMs(plan.period)), balance: sub.balance, credit: 0 };
+}
+
+/**
+ * Switching plans carries over the VALUE of paid time, not the time itself:
+ * a month of Standard (₱199) becomes about half a month of Plus (₱399), and
+ * back again. Rider Daily load stays as load.
+ */
+export function switchPlan(
+  sub: Pick<SubscriptionDoc, 'currentPeriodEnd' | 'trialEndsAt' | 'balance' | 'credit'>,
+  from: PlanPrice,
+  to: PlanPrice,
+  now: number,
+): Pick<SubscriptionDoc, 'planCode' | 'currentPeriodEnd' | 'balance' | 'credit'> {
+  const value = paidValueLeft(sub, from, now);
+  const usedTime = from.price > 0 && from.code !== 'rider_daily' && sub.currentPeriodEnd !== null && value > (sub.credit ?? 0);
+  // Without unused paid time the paid-until date stays as is (so a grace period keeps running).
+  const base = { ...sub, currentPeriodEnd: usedTime ? null : sub.currentPeriodEnd, credit: 0 };
+  return { planCode: to.code, ...creditValue(base, to, value, now) };
 }
 
 /**

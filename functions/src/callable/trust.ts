@@ -14,12 +14,15 @@ import {
 import { db } from '../lib/admin';
 import { parseInput, requireAuth } from '../lib/guards';
 import { ORS_API_KEY, SEMAPHORE_API_KEY } from '../lib/params';
-import { addStrike, liftFields, suspensionFields, targetRef } from '../lib/strikes';
+import { addStrike, isBanned, liftFields, strikesRef, suspensionFields, targetRef } from '../lib/strikes';
 import { actorFor, flush, getOrderIn, ms, orderCode, type Order, type Outbox } from '../orders/core';
 
 const fail = (code: 'failed-precondition' | 'permission-denied' | 'not-found' | 'already-exists' | 'invalid-argument', message: string): never => {
   throw new HttpsError(code, message);
 };
+
+const SAFETY_SUSPEND_WINDOW_MS = 48 * 3600_000;
+const SAFETY_SUSPENDS_PER_REPORTER = 2;
 
 /** Who may rate or report whom on an order. */
 const ALLOWED: Record<'customer' | 'shop' | 'rider', { rate: TargetType[]; report: TargetType[] }> = {
@@ -72,7 +75,7 @@ export const submitRating = onCall(async (req) => {
       createdAt: FieldValue.serverTimestamp(),
     });
     tx.set(tRef, { ratingAvg: next.avg, ratingCount: next.count }, { merge: true });
-    tx.update(ref, { [`ratings.${actor}_${input.toType}`]: input.stars, updatedAt: FieldValue.serverTimestamp() });
+    tx.update(ref, { [`ratings.${actor}_${input.toType}`]: true, updatedAt: FieldValue.serverTimestamp() });
   });
   return { ok: true };
 });
@@ -97,7 +100,18 @@ export const submitReport = onCall({ secrets: [SEMAPHORE_API_KEY, ORS_API_KEY] }
 
     const urgent = input.category === 'safety';
     const met = order.statusHistory.some((h) => h.status === 'RIDER_ASSIGNED');
-    const suspendNow = urgent && met && targetSnap.get('status') !== 'suspended';
+    // Instant suspension is for something that just happened: the order is
+    // still running or ended within 48 hours. Older reports wait for review.
+    const lastAt = Math.max(...order.statusHistory.map((h) => ms(h.at)));
+    const recent = !['COMPLETED', 'CANCELLED', 'EXPIRED', 'SHOP_DECLINED'].includes(order.status) || Date.now() - lastAt < SAFETY_SUSPEND_WINDOW_MS;
+    // Shops are not taken offline on one report; and one reporter can trigger
+    // at most SAFETY_SUSPENDS_PER_REPORTER instant suspensions in 30 days.
+    const byReporter = await tx.get(
+      db.collection('reports').where('reporterId', '==', caller.uid).where('suspendedOnReport', '==', true).where('createdAt', '>=', new Date(Date.now() - 30 * 86_400_000)),
+    );
+    const underCap = byReporter.size < SAFETY_SUSPENDS_PER_REPORTER;
+    // Only an active account is suspended on report: never an already-suspended or banned one.
+    const suspendNow = urgent && met && recent && underCap && input.targetType !== 'shop' && targetSnap.get('status') === 'active';
     tx.create(reportRef, {
       orderId: order.id,
       orderCode: orderCode(order),
@@ -156,6 +170,7 @@ export const resolveReport = onCall({ secrets: [SEMAPHORE_API_KEY, ORS_API_KEY] 
     const type = report.get('targetType') as TargetType;
     const targetId = report.get('targetId') as string;
     const tSnap = await tx.get(targetRef(type, targetId));
+    const sSnap = input.resolution === 'confirmed' ? await tx.get(strikesRef(type, targetId)) : null;
     const ownerUid = type === 'shop' ? (tSnap.get('ownerId') as string) : targetId;
     const out: Outbox = [];
 
@@ -168,14 +183,14 @@ export const resolveReport = onCall({ secrets: [SEMAPHORE_API_KEY, ORS_API_KEY] 
     });
 
     if (input.resolution === 'confirmed') {
-      const result = addStrike(tx, type, tSnap, { source: 'report', ref: reportRef.id, at: Date.now() });
-      if (report.get('category') === 'safety') tx.update(tSnap.ref, suspensionFields(type, 'safety', null));
+      const result = addStrike(tx, type, tSnap, sSnap!, { source: 'report', ref: reportRef.id, at: Date.now() });
+      if (report.get('category') === 'safety' && !isBanned(tSnap)) tx.update(tSnap.ref, suspensionFields(type, 'safety', null));
       if (result.suspended || report.get('category') === 'safety') {
         out.push({ uid: ownerUid, notice: { title: 'Account suspended', body: 'Your Hatod account is suspended after a confirmed report. Contact your town coordinator.', link: '/', sms: true } });
       } else {
         out.push({ uid: ownerUid, notice: { title: 'Warning', body: 'A report about you was confirmed. 3 confirmed reports in 30 days mean a 7-day suspension.', link: '/' } });
       }
-    } else if (report.get('suspendedOnReport') === true && tSnap.get('suspendedReason') === 'safety_review') {
+    } else if (report.get('suspendedOnReport') === true && tSnap.get('status') === 'suspended' && tSnap.get('suspendedReason') === 'safety_review') {
       tx.update(tSnap.ref, liftFields);
       out.push({ uid: ownerUid, notice: { title: 'Suspension lifted', body: 'The report was reviewed and dismissed. Your account is active again.', link: '/' } });
     }

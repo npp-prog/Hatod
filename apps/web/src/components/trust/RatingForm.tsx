@@ -8,20 +8,20 @@ import { submitRating } from '@/lib/data/trust';
 import { callableMessage } from '@/lib/firebase/errors';
 
 /** Stars, quick tags and an optional comment. Shows the given rating once sent. */
-export function RatingForm({ orderId, toType, title, already }: { orderId: string; toType: TargetType; title: string; already?: number }) {
+export function RatingForm({ orderId, toType, title, already }: { orderId: string; toType: TargetType; title: string; already?: boolean }) {
   const t = useTranslations('trust');
   const [stars, setStars] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sent, setSent] = useState<number | null>(already ?? null);
+  const [sent, setSent] = useState<number | true | null>(already ? true : null);
   const [error, setError] = useState<string | null>(null);
 
   if (sent) {
     return (
       <p className="flex items-center justify-between gap-2 rounded-xl bg-page p-3">
         <span className="font-semibold">{title}</span>
-        <span className="text-ok">{t('rated', { n: sent })}</span>
+        <span className="text-ok">{sent === true ? t('thanks') : t('rated', { n: sent })}</span>
       </p>
     );
   }
@@ -36,7 +36,7 @@ export function RatingForm({ orderId, toType, title, already }: { orderId: strin
     } catch (e) {
       const code = callableMessage(e) ?? 'generic';
       setError(t.has(`errors.${code}` as 'errors.generic') ? t(`errors.${code}` as 'errors.generic') : t('errors.generic'));
-      if (code === 'already_rated') setSent(stars);
+      if (code === 'already_rated') setSent(true);
     } finally {
       setBusy(false);
     }

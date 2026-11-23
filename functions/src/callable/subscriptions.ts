@@ -13,14 +13,15 @@ import {
   setPlanPricesInput,
   SHOP_PLANS,
   startCheckoutInput,
+  switchPlan,
   type SubscriptionDoc,
 } from '@hatod/shared';
 import { db } from '../lib/admin';
 import { logAdminAction } from '../lib/audit';
 import { parseInput, requireAuth, type Caller } from '../lib/guards';
 import { notify } from '../lib/notify';
-import { PAYMENT_PROVIDER, PAYMONGO_SECRET_KEY, PAYMONGO_WEBHOOK_SECRET, SEMAPHORE_API_KEY, ORS_API_KEY } from '../lib/params';
-import { paymentProvider, verifyPaymongoSignature } from '../lib/providers/payments';
+import { PAYMONGO_SECRET_KEY, PAYMONGO_WEBHOOK_SECRET, SEMAPHORE_API_KEY, ORS_API_KEY } from '../lib/params';
+import { mockPaymentsActive, paymentProvider, paymongoLive, verifyPaymongoSignature } from '../lib/providers/payments';
 import { applyPayment, chargeDaily, getPlan, priceFor, subId, subsCol, writeStatus } from '../lib/subscriptions';
 
 const fail = (code: 'permission-denied' | 'not-found' | 'failed-precondition' | 'invalid-argument', message: string): never => {
@@ -42,7 +43,7 @@ async function tierOf(townId: string) {
   return (await db.collection('towns').doc(townId).get()).get('tier') ?? 'C';
 }
 
-/** Switch plan (Basic/Standard/Plus for shops, Daily/Monthly for riders). Paid time carries over. */
+/** Switch plan (Basic/Standard/Plus for shops, Daily/Monthly for riders). The value of unused paid time carries over. */
 export const choosePlan = onCall(async (req) => {
   const caller = requireAuth(req);
   const input = parseInput(choosePlanInput.merge(subscriberType), req.data);
@@ -51,9 +52,17 @@ export const choosePlan = onCall(async (req) => {
   const { ref } = await ownSubscription(caller, input.subscriberType);
   await db.runTransaction(async (tx) => {
     const sub = (await tx.get(ref)).data() as SubscriptionDoc;
-    const daily = await getPlan('rider_daily', tx);
-    const town = await tx.get(db.collection('towns').doc(sub.townId));
-    writeStatus(tx, ref, sub, { planCode: input.planCode }, priceFor(daily, town.get('tier')));
+    if (sub.planCode === input.planCode) return;
+    const [daily, from, to, town] = await Promise.all([
+      getPlan('rider_daily', tx),
+      getPlan(sub.planCode, tx),
+      getPlan(input.planCode, tx),
+      tx.get(db.collection('towns').doc(sub.townId)),
+    ]);
+    const tier = town.get('tier');
+    const now = Date.now();
+    const patch = switchPlan(sub, { code: from.code, price: priceFor(from, tier), period: from.period }, { code: to.code, price: priceFor(to, tier), period: to.period }, now);
+    writeStatus(tx, ref, sub, patch, priceFor(daily, tier), now);
   });
   return { ok: true };
 });
@@ -71,15 +80,17 @@ export const startCheckout = onCall({ secrets: [PAYMONGO_SECRET_KEY] }, async (r
   const amount = topUp ? input.topUp! : price * input.periods;
   const checkoutRef = db.collection('checkouts').doc();
   const description = topUp ? `Hatod rider load ${formatPHP(amount)}` : `Hatod ${plan.code.replace('_', ' ')} × ${input.periods}`;
-  const { url, sessionId } = await paymentProvider().createCheckout({ checkoutId: checkoutRef.id, amount, description, method: input.method });
+  const provider = paymentProvider();
+  const { url, sessionId } = await provider.createCheckout({ checkoutId: checkoutRef.id, amount, description, method: input.method });
   await checkoutRef.set({
     subscriptionId: ref.id,
     ownerUid: caller.uid,
     amount,
     kind: topUp ? 'topup' : 'period',
     periods: topUp ? 0 : input.periods,
+    planCode: sub.planCode,
     method: input.method,
-    provider: PAYMENT_PROVIDER.value(),
+    provider: provider.name,
     sessionId,
     status: 'open',
     createdAt: FieldValue.serverTimestamp(),
@@ -88,11 +99,18 @@ export const startCheckout = onCall({ secrets: [PAYMONGO_SECRET_KEY] }, async (r
 });
 
 /** Completes a checkout: shared by the PayMongo webhook and the development mock. */
-async function completeCheckout(checkoutId: string, providerRef: string, method: 'gcash' | 'maya' | 'mock') {
+async function completeCheckout(
+  checkoutId: string,
+  providerRef: string,
+  method: 'gcash' | 'maya' | 'mock',
+  check?: (c: FirebaseFirestore.DocumentData) => string | null,
+) {
   const checkoutRef = db.collection('checkouts').doc(checkoutId);
   const checkout = await checkoutRef.get();
   if (!checkout.exists) throw new Error('checkout_not_found');
   const c = checkout.data()!;
+  const problem = check?.(c);
+  if (problem) throw new CheckoutMismatch(problem);
   const result = await applyPayment(c.subscriptionId, {
     amount: c.amount,
     method,
@@ -101,16 +119,19 @@ async function completeCheckout(checkoutId: string, providerRef: string, method:
     recordedBy: null,
     kind: c.kind,
     periods: c.periods,
+    ...(c.planCode ? { planCode: c.planCode } : {}),
   });
   await checkoutRef.update({ status: 'paid', paidAt: FieldValue.serverTimestamp(), providerRef });
   if (!result.duplicate) await notify(c.ownerUid, { title: 'Payment received', body: `Hatod received your payment of ${formatPHP(c.amount)}. Thank you!`, link: '/' });
   return result;
 }
 
+class CheckoutMismatch extends Error {}
+
 /** Development only: the mock checkout page's "Pay" button. Refused unless the mock provider is active. */
 export const mockCompleteCheckout = onCall(async (req) => {
   const caller = requireAuth(req);
-  if (PAYMENT_PROVIDER.value() !== 'mock') fail('permission-denied', 'mock_disabled');
+  if (!mockPaymentsActive()) fail('permission-denied', 'mock_disabled');
   const { checkoutId } = parseInput(z.object({ checkoutId: z.string().min(1).max(100) }), req.data);
   const c = await db.collection('checkouts').doc(checkoutId).get();
   if (!c.exists || c.get('ownerUid') !== caller.uid) fail('not-found', 'checkout_not_found');
@@ -118,7 +139,7 @@ export const mockCompleteCheckout = onCall(async (req) => {
 });
 
 /** PayMongo webhook: verifies the signature, then applies the payment (idempotent by payment id). */
-export const paymongoWebhook = onRequest({ secrets: [PAYMONGO_WEBHOOK_SECRET, SEMAPHORE_API_KEY, ORS_API_KEY] }, async (req, res) => {
+export const paymongoWebhook = onRequest({ secrets: [PAYMONGO_SECRET_KEY, PAYMONGO_WEBHOOK_SECRET, SEMAPHORE_API_KEY, ORS_API_KEY] }, async (req, res) => {
   if (req.method !== 'POST') return void res.status(405).send('method');
   if (!verifyPaymongoSignature(req.get('Paymongo-Signature'), req.rawBody)) return void res.status(401).send('signature');
   const event = req.body?.data?.attributes;
@@ -128,10 +149,23 @@ export const paymongoWebhook = onRequest({ secrets: [PAYMONGO_WEBHOOK_SECRET, SE
   const payment = session?.payments?.[0];
   if (!checkoutId || !payment?.id) return void res.status(400).send('missing');
   const method = payment.attributes?.source?.type === 'paymaya' ? 'maya' : 'gcash';
+  const live = paymongoLive();
   try {
-    await completeCheckout(checkoutId, payment.id, method);
+    await completeCheckout(checkoutId, payment.id, method, (c) => {
+      if (Boolean(event.livemode ?? session.livemode) !== live) return 'mode';
+      if (c.provider !== 'paymongo') return 'provider';
+      if (event.data?.id !== c.sessionId) return 'session';
+      const paid = Number(payment.attributes?.amount ?? 0);
+      if (payment.attributes?.status !== 'paid' || paid < c.amount * 100) return 'amount';
+      return null;
+    });
     res.status(200).send('ok');
   } catch (e) {
+    if (e instanceof CheckoutMismatch) {
+      // Not ours or not what we asked for: log it and stop PayMongo retrying.
+      logger.warn('paymongo webhook rejected', { reason: e.message, checkoutId });
+      return void res.status(200).send('rejected');
+    }
     logger.error('paymongo webhook failed', { error: String(e), checkoutId });
     res.status(500).send('error'); // PayMongo retries
   }
@@ -146,6 +180,8 @@ export const recordCashPayment = onCall({ secrets: [SEMAPHORE_API_KEY, ORS_API_K
   const sub = snap.data() as SubscriptionDoc;
   const ok = hasRole(caller.claims.roles, 'admin') || (hasRole(caller.claims.roles, 'coordinator') && caller.claims.coordTowns?.includes(sub.townId));
   if (!ok) fail('permission-denied', 'not_your_town');
+  // A coordinator never records payments for their own shop or rider account.
+  if (sub.ownerUid === caller.uid && !hasRole(caller.claims.roles, 'admin')) fail('permission-denied', 'not_your_own');
   const plan = await getPlan(sub.planCode);
   const price = priceFor(plan, await tierOf(sub.townId));
   const topUp = sub.planCode === 'rider_daily';

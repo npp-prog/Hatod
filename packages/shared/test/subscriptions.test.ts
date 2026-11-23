@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DAY_MS, extendPeriod, nextStatusChange, shopTakesOrders, sortShopsForHome, subscriptionStatus, trialEndFor, visibleMenuLimit } from '../src';
+import { creditValue, DAY_MS, switchPlan, extendPeriod, nextStatusChange, shopTakesOrders, sortShopsForHome, subscriptionStatus, trialEndFor, visibleMenuLimit } from '../src';
 
 const now = Date.parse('2026-11-23T12:00:00+08:00');
 const sub = (over = {}) => ({ planCode: 'shop_standard' as const, trialEndsAt: now - 10 * DAY_MS, currentPeriodEnd: null as number | null, balance: 0, ...over });
@@ -65,5 +65,57 @@ describe('what a plan allows', () => {
       { name: 'C plus closed', hours: {}, closedOn: null, ratingAvg: 5, ratingCount: 10, planCode: 'shop_plus' as const, subscriptionStatus: 'active' as const },
     ];
     expect(sortShopsForHome(shops, new Date(now)).map((s) => s.name)).toEqual(['B plus', 'A', 'C plus closed']);
+  });
+});
+
+describe('switching plans carries over value, not time', () => {
+  const D = 86_400_000;
+  const now = 1_800_000_000_000;
+  const standard = { code: 'shop_standard' as const, price: 199, period: 'month' as const };
+  const plus = { code: 'shop_plus' as const, price: 399, period: 'month' as const };
+  const basic = { code: 'shop_basic' as const, price: 0, period: 'month' as const };
+  const daily = { code: 'rider_daily' as const, price: 5, period: 'day' as const };
+  const monthly = { code: 'rider_monthly' as const, price: 69, period: 'month' as const };
+  const paid = (days: number) => ({ currentPeriodEnd: now + days * D, trialEndsAt: now - 100 * D, balance: 0, credit: 0 });
+
+  it('12 months of Standard become about 6 months of Plus, not 12', () => {
+    const r = switchPlan(paid(360), standard, plus, now);
+    expect(r.planCode).toBe('shop_plus');
+    const days = (r.currentPeriodEnd! - now) / D;
+    expect(days).toBeCloseTo((360 * 199) / 399, 3);
+  });
+
+  it('switching back and forth never grows paid time', () => {
+    const there = switchPlan(paid(30), standard, plus, now);
+    const back = switchPlan({ ...paid(0), ...there }, plus, standard, now);
+    expect(back.currentPeriodEnd! - now).toBeLessThanOrEqual(30 * D + 1);
+  });
+
+  it('Basic parks the value as credit and gives it back as time later', () => {
+    const parked = switchPlan(paid(30), standard, basic, now);
+    expect(parked).toMatchObject({ planCode: 'shop_basic', currentPeriodEnd: null });
+    expect(parked.credit).toBeCloseTo(199, 5);
+    const again = switchPlan({ ...paid(0), ...parked }, basic, standard, now + 10 * D);
+    expect((again.currentPeriodEnd! - (now + 10 * D)) / D).toBeCloseTo(30, 3);
+    expect(again.credit).toBe(0);
+  });
+
+  it('monthly rider time becomes prepaid load on Rider Daily; load stays as load', () => {
+    const r = switchPlan(paid(30), monthly, daily, now);
+    expect(r.balance).toBe(69);
+    const m = switchPlan({ ...paid(0), currentPeriodEnd: null, balance: 40 }, daily, monthly, now);
+    expect(m).toMatchObject({ planCode: 'rider_monthly', currentPeriodEnd: null, balance: 40 });
+  });
+
+  it('trial time is free and is not converted; a running grace period keeps its date', () => {
+    const inTrial = { currentPeriodEnd: null, trialEndsAt: now + 20 * D, balance: 0, credit: 0 };
+    expect(switchPlan(inTrial, standard, plus, now)).toMatchObject({ planCode: 'shop_plus', currentPeriodEnd: null });
+    const inGrace = { ...paid(-1) };
+    expect(switchPlan(inGrace, standard, plus, now).currentPeriodEnd).toBe(now - D);
+  });
+
+  it('a payment priced for another plan is credited by its peso value', () => {
+    const r = creditValue(paid(0), plus, 199, now);
+    expect((r.currentPeriodEnd! - now) / D).toBeCloseTo((199 / 399) * 30, 3);
   });
 });

@@ -62,6 +62,25 @@ describe('setAccountStatus', () => {
     const log = await adminDb.collection('adminLog').where('targetId', '==', 'adm-shop').get();
     expect(log.docs.map((d) => d.get('action')).sort()).toEqual(['reinstate_shop', 'suspend_shop', 'verify_shop']);
   });
+  it('coordinators act on customers who order in their town (not on defaultTownId), and never on staff', async () => {
+    const roamer = await person('+639177770006', ['customer'], {}, { defaultTownId: 'elsewhere' });
+    const local = await person('+639177770007', ['customer'], {}, { defaultTownId: T });
+    await adminDb.doc('orders/adm-roamer-1').set({ townId: T, customerId: roamer.uid, status: 'COMPLETED', createdAt: Timestamp.now() });
+    await call(coord, 'setAccountStatus', { type: 'customer', id: roamer.uid, action: 'suspend', note: 'Fake orders in our town.' });
+    expect((await adminDb.doc(`users/${roamer.uid}`).get()).get('status')).toBe('suspended');
+    await failsWith(call(coord, 'setAccountStatus', { type: 'customer', id: local.uid, action: 'suspend', note: 'Never ordered here.' }), 'not_your_town');
+    await adminDb.doc('orders/adm-othercoord-1').set({ townId: T, customerId: otherCoord.uid, status: 'COMPLETED', createdAt: Timestamp.now() });
+    await failsWith(call(coord, 'setAccountStatus', { type: 'customer', id: otherCoord.uid, action: 'suspend', note: 'Staff account.' }), 'admin_only');
+    await failsWith(call(coord, 'setAccountStatus', { type: 'customer', id: admin.uid, action: 'suspend', note: 'Staff account.' }), 'admin_only');
+    // keep the town's metrics below clean
+    await adminDb.doc('orders/adm-roamer-1').delete();
+    await adminDb.doc('orders/adm-othercoord-1').delete();
+  });
+  it('a coordinator cannot verify their own listing', async () => {
+    await adminDb.doc('shops/coord-shop').set({ ownerId: coord.uid, townId: T, name: 'Coordinator Snacks', verified: false, verificationStatus: 'pending', status: 'active' });
+    await failsWith(call(coord, 'verifyListing', { kind: 'shop', id: 'coord-shop', decision: 'approve' }), 'not_your_own');
+    await call(admin, 'verifyListing', { kind: 'shop', id: 'coord-shop', decision: 'approve' });
+  });
   it('an admin cannot suspend themselves by mistake', async () => {
     await failsWith(call(admin, 'setAccountStatus', { type: 'customer', id: admin.uid, action: 'suspend', note: 'oops' }), 'not_yourself');
   });

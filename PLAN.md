@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M9 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M10 done** (Phase 1 MVP complete).
 
 ---
 
@@ -198,7 +198,7 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 
 | Topic | Decision |
 |---|---|
-| Starting plan | New shops start on Standard, new riders on Monthly, both in the free trial; they can switch any time (paid time carries over). |
+| Starting plan | New shops start on Standard, new riders on Monthly, both in the free trial; they can switch any time (the value of paid time carries over; see M10). |
 | Month length | 30 days, so renewals are predictable. Paying early extends from the current end; paying during the trial extends from the trial end. |
 | Going online | Moved to a Cloud Function (`goOnline`) so the Rider Daily fee and the subscription check cannot be skipped. Going offline stays a direct write that works on weak signal. |
 | Basic shops | Listed with "Order by phone" (call and text), first 10 items, no in-app orders. Same for lapsed Standard/Plus shops, and their data is kept. |
@@ -206,6 +206,19 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Payment safety | Payments are applied in one transaction and stored by reference, so webhook retries and repeated receipts can't double-count. PayMongo webhooks are verified (HMAC-SHA256, 5-minute window). |
 | Featured banner | Plan defined but not offered yet (needs the home banner feature). |
 | Fixed in testing | Going online again without a location no longer wipes the rider's rough location. |
+
+### Decisions made during M10
+
+| Topic | Decision |
+|---|---|
+| Security review | An independent review of the rules and functions found 11 issues. All are fixed, with regression tests:<br>• bans can no longer be undone by reports, strikes, the sweep or coordinators<br>• payments fail closed (mock only in the emulator)<br>• plan switches carry over value, not time<br>• strikes moved to a private collection<br>• instant safety suspensions are limited (48 h, never shops, 2 per reporter per 30 days)<br>• coordinators act on customers by where they order, never on staff or on their own accounts<br>• image URLs are pinned to this project's bucket<br>• the open-order cap is checked in a transaction<br>• orders store only rated flags<br>• the webhook checks mode, session and amount |
+| Node runtime | Functions on Node.js 24 (`nodejs24`, `.nvmrc`). Local development still works on Node 22. |
+| Image URLs | Rules read the allowed bucket from `config/app` (set by the seed, or `scripts/set-config.ts` for real projects). |
+| Performance | No link prefetching (saves mobile data). Auth initialised without the popup/redirect resolver (no apis.google.com script). Customer home 129 KB, checked by `npm run check:bundle`. |
+| Offline | A precached "No signal" page per language for pages never opened. Order buttons say "No signal" when offline. |
+| E2E | Playwright suite in `e2e/` (`npm run e2e`), run in CI after the build. |
+| Dependencies | `npm audit --omit=dev` is clean; `overrides` pin patched `@grpc/grpc-js`, `postcss` and `tinypool`. The remaining 16 moderate/low findings are in dev-only tools (emulator tooling, Vitest, tsup's esbuild) and never ship. Fixing them needs breaking major upgrades, so they are left for a tooling update. |
+| Fixed in testing | The seed's sample orders lacked pickup/dropoff and crashed the rider's earnings list. The rider overview now shows the plan-lapsed notice (as the shop's does). |
 
 ### Original open questions (answered above)
 

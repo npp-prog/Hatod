@@ -19,7 +19,6 @@ export interface UserDoc {
   roles: Role[];
   defaultTownId: string | null;
   status: UserStatus;
-  strikes: { reportId: string; at: Timestamp }[];
   consent: Consent;
   locale: string;
   createdAt: Timestamp;

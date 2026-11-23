@@ -34,7 +34,10 @@
   },
   "offline": {
     "banner": "Naghihintay ng signal. Susubukan ulit pagbalik ng koneksyon.",
-    "back": "May signal na ulit."
+    "back": "May signal na ulit.",
+    "pageTitle": "Walang signal",
+    "pageBody": "Hindi pa naka-save sa phone mo ang page na ito. Gumagana pa rin ang mga page na nabuksan mo na, gaya ng menu at mga order mo. Ilo-load namin ito pagbalik ng signal.",
+    "tryAgain": "Subukang muli"
   },
   "home": {
     "title": "Ano ang gusto mo ngayon?",
@@ -871,7 +874,8 @@
       "order_expired": "Nag-expire na ang order na ito.",
       "generic": "May nangyaring mali. Suriin ang signal at subukang muli.",
       "account_not_active": "Naka-suspend ang account mo. Kausapin ang town coordinator.",
-      "shop_basic_no_orders": "Sa tawag o text lang tumatanggap ng order ang tindahang ito."
+      "shop_basic_no_orders": "Sa tawag o text lang tumatanggap ng order ang tindahang ito.",
+      "no_signal": "Walang signal. Hindi pumasok ang pinindot mo. Subukang muli pagbalik ng signal."
     }
   },
   "shopOrders": {
@@ -1235,7 +1239,8 @@
       "receipt_already_used": "Naitala na ang receipt number na iyan.",
       "receipt_required": "Ilagay ang receipt number.",
       "bad_receipt": "Letra, numero at gitling lang.",
-      "generic": "Hindi maitala. Pakisubukang muli."
+      "generic": "Hindi maitala. Pakisubukang muli.",
+      "not_your_own": "Ibang coordinator o admin ang dapat mag-record ng bayad para sa sarili mong account."
     },
     "conversion": "Nagbabayad na",
     "plansTitle": "Mga plano at presyo",

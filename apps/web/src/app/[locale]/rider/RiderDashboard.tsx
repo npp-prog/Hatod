@@ -38,6 +38,12 @@ export function RiderDashboard() {
         <Banner cls="bg-warn/30 border-2 border-warn" title={t('dash.pendingTitle')} body={t('dash.pendingBody')} />
       )}
 
+      {(rider.subscriptionStatus === 'grace' || rider.subscriptionStatus === 'lapsed') && (
+        <Link href="/rider/subscription" className="block rounded-2xl border-2 border-danger bg-danger/10 p-4 font-semibold">
+          {rider.subscriptionStatus === 'grace' ? tp('status.grace') : tp('lapsedRider')}
+        </Link>
+      )}
+
       <section className="card space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>

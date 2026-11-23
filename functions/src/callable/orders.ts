@@ -30,7 +30,7 @@ import { db } from '../lib/admin';
 import { parseInput, requireAuth } from '../lib/guards';
 import { ORS_API_KEY, SEMAPHORE_API_KEY } from '../lib/params';
 import { roadDistanceKm } from '../lib/providers/routing';
-import { addStrike } from '../lib/strikes';
+import { addStrike, strikesRef } from '../lib/strikes';
 import {
   actorFor,
   applyTimeouts,
@@ -190,12 +190,23 @@ export const placeOrder = onCall(withSecrets, async (req) => {
     createdAt: now,
     updatedAt: now,
   };
-  try {
-    await orderRef.create(order);
-  } catch {
+  // Re-check the open-order limit inside a transaction that also writes the
+  // customer's user doc: parallel placeOrder calls then conflict and retry,
+  // so they cannot all slip under the limit at once.
+  const created = await db.runTransaction(async (tx) => {
+    const userRef = db.collection('users').doc(caller.uid);
+    const [again, open] = await Promise.all([
+      tx.get(orderRef),
+      tx.get(ordersCol().where('customerId', '==', caller.uid).where('status', 'in', ACTIVE_STATUSES).limit(MAX_OPEN_ORDERS + 1)),
+    ]);
     // Same requestId raced in from a retry: the first one won; return it.
-    return { orderId: orderRef.id, duplicate: true };
-  }
+    if (again.exists) return false;
+    if (open.size >= MAX_OPEN_ORDERS) fail('failed-precondition', 'too_many_open_orders');
+    tx.update(userRef, { lastOrderAt: now });
+    tx.create(orderRef, order);
+    return true;
+  });
+  if (!created) return { orderId: orderRef.id, duplicate: true };
   await flush([
     {
       uid: shop!.ownerId,
@@ -381,8 +392,9 @@ export const cancelOrder = onCall(withSecrets, async (req) => {
     // A customer cancelling after the shop started is a late cancellation: it counts as a strike.
     const lateCancel = actor === 'customer' && cancelNeedsReason(order.status, 'customer');
     const customerSnap = lateCancel ? await tx.get(db.collection('users').doc(order.customerId)) : null;
+    const customerStrikes = lateCancel ? await tx.get(strikesRef('customer', order.customerId)) : null;
     if (offerSnap?.exists && offerSnap.get('status') === 'pending') tx.update(offerSnap.ref, { status: 'cancelled', respondedAt: FieldValue.serverTimestamp() });
-    if (customerSnap?.exists) addStrike(tx, 'customer', customerSnap, { source: 'late_cancel', ref: order.id, at: Date.now() });
+    if (customerSnap?.exists && customerStrikes) addStrike(tx, 'customer', customerSnap, customerStrikes, { source: 'late_cancel', ref: order.id, at: Date.now() });
     transition(tx, ref, order, 'CANCELLED', actor!, { cancelReason: input.reason, cancelledBy: actor, offerId: null, expiresAt: null });
     const text = `Order ${orderCode(order)} was cancelled by the ${actor}.`;
     const others = [order.customerId, order.shopOwnerId, order.riderId ?? offerSnap?.get('riderId')].filter((u): u is string => !!u && u !== caller.uid);

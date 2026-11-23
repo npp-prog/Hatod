@@ -97,8 +97,12 @@ describe('paying online (mock provider)', () => {
     expect((await adminDb.doc(`shops/${shopId}`).get()).data()).toMatchObject({ planCode: 'shop_basic', subscriptionStatus: 'active' });
     await failsWith(call(owner, 'startCheckout', { subscriberType: 'shop', periods: 1 }), 'free_plan');
     await failsWith(call(owner, 'choosePlan', { subscriberType: 'shop', planCode: 'rider_daily' }), 'plan_not_for_you');
+    expect((await sub(`shop_${shopId}`)).credit).toBeCloseTo(398, 0); // 2 paid months parked as pesos
     await call(owner, 'choosePlan', { subscriberType: 'shop', planCode: 'shop_plus' });
-    expect((await sub(`shop_${shopId}`)).status).toBe('active'); // paid time carries over
+    const s = await sub(`shop_${shopId}`);
+    expect(s.status).toBe('active');
+    // ₱398 of Standard buys about one month of Plus (₱399), not two
+    expect((s.currentPeriodEnd - Date.now()) / DAY_MS).toBeCloseTo((398 / 399) * 30, 0);
   });
 });
 
@@ -121,6 +125,26 @@ describe('admin prices', () => {
     await call(admin, 'adminSetPlanPrices', { code: 'shop_plus', prices: { A: 499, B: 449, C: 349 }, active: true });
     const r = await call<{ checkoutId: string }>(owner, 'startCheckout', { subscriberType: 'shop', periods: 1 });
     expect((await adminDb.doc(`checkouts/${r.checkoutId}`).get()).get('amount')).toBe(349);
+  });
+});
+
+describe('payments and plan switches', () => {
+  it('a checkout priced for one plan but paid after switching is credited by its peso value', async () => {
+    const r = await call<{ checkoutId: string }>(owner, 'startCheckout', { subscriberType: 'shop', periods: 1 }); // Plus, ₱349 now
+    await call(owner, 'choosePlan', { subscriberType: 'shop', planCode: 'shop_standard' });
+    const before = (await sub(`shop_${shopId}`)).currentPeriodEnd;
+    await call(owner, 'mockCompleteCheckout', { checkoutId: r.checkoutId });
+    const added = ((await sub(`shop_${shopId}`)).currentPeriodEnd - before) / DAY_MS;
+    expect(added).toBeCloseTo((349 / 199) * 30, 0);
+  });
+  it('a coordinator cannot record payments for their own account', async () => {
+    await adminDb.doc('subscriptions/shop_coordshop').set({
+      subscriberType: 'shop', subscriberId: 'coordshop', ownerUid: coord.uid, townId: T, planCode: 'shop_standard', status: 'lapsed',
+      trialEndsAt: Date.now() - 10 * DAY_MS, currentPeriodEnd: null, balance: 0, lastChargedDate: null, nextChangeAt: null, createdAt: 0, updatedAt: 0,
+    });
+    await adminDb.doc('shops/coordshop').set({ ownerId: coord.uid, townId: T, name: 'Coord Snacks' });
+    await failsWith(call(coord, 'recordCashPayment', { subscriptionId: 'shop_coordshop', receiptNo: 'OR-3001', periods: 12 }), 'not_your_own');
+    await call(admin, 'recordCashPayment', { subscriptionId: 'shop_coordshop', receiptNo: 'OR-3001', periods: 1 });
   });
 });
 
@@ -167,5 +191,10 @@ describe('PayMongo webhook signature', () => {
     expect(verifyPaymongoSignature(`t=${t},te=${sig.replace(/.$/, '0')},li=`, body)).toBe(false);
     expect(verifyPaymongoSignature(`t=${t - 3600},te=${sig},li=`, body)).toBe(false);
     expect(verifyPaymongoSignature(undefined, body)).toBe(false);
+    // With a live key only the live-mode signature counts.
+    const now = Date.now();
+    expect(verifyPaymongoSignature(`t=${t},te=${sig},li=`, body, now, true)).toBe(false);
+    expect(verifyPaymongoSignature(`t=${t},te=,li=${sig}`, body, now, true)).toBe(true);
+    expect(verifyPaymongoSignature(`t=${t},te=,li=${sig}`, body, now, false)).toBe(false);
   });
 });

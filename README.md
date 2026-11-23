@@ -9,15 +9,16 @@ See [PLAN.md](PLAN.md) for the milestone plan and decisions.
 | Path | What |
 |---|---|
 | `apps/web` | Next.js 15 (App Router) + TypeScript + Tailwind v4 PWA (Serwist), next-intl (`en`, `fil`) |
-| `functions` | Cloud Functions (Node 22, TypeScript, bundled with tsup) |
+| `functions` | Cloud Functions (Node 24, TypeScript, bundled with tsup) |
 | `packages/shared` | Pure business logic, types and zod schemas used by both, with Vitest tests |
 | `tests` | Emulator tests: Firestore rules and callable functions |
+| `e2e` | Playwright end-to-end tests of the 3 core flows |
 | `scripts/seed.ts` | Demo data for the emulators |
 | `firestore.rules`, `storage.rules` | Security rules (deny by default) |
 
 ## Requirements
 
-- Node 22 (`nvm use`)
+- Node 22 or 24 (`nvm use` picks 24, the functions runtime)
 - Java 21+ (for the Firestore emulator)
 - No Firebase account is needed for local work. The emulators run the `demo-hatod` project, which never touches real Firebase.
 
@@ -143,14 +144,17 @@ For the emulator, copy `functions/.secret.local.example` to `functions/.secret.l
 - **Ratings:** after an order is completed, each side rates the other once (1–5 stars, quick tags, optional comment) within 7 days.
   - The customer rates the shop and the rider; the shop and the rider each rate the customer.
   - Averages on shops, riders and customers update in the same transaction.
-  - Ratings of customers are visible only to staff.
+  - Ratings of customers are visible only to staff. An order only records *that* each side rated, never the stars, so nobody sees how they were rated.
 - **Reports:** "Report a problem" is on the customer's order page, the shop's order cards and the rider's jobs and history.
   - Reports land in the town coordinator's queue at `/coordinator/reports` (admins see every town). The reported person can't see who reported them.
-  - Safety reports are urgent: the coordinator gets an SMS. If people have already met on that order (a rider was assigned), the reported person is suspended at once until the coordinator decides.
+  - Safety reports are urgent: the coordinator gets an SMS. If people have already met on that order (a rider was assigned) and the order is running or ended within 48 hours, the reported customer or rider is suspended at once until the coordinator decides.
+  - To stop this being used as a weapon: shops are never taken offline by one report (the coordinator decides), and one person can trigger at most 2 instant suspensions in 30 days. Later reports still reach the queue.
 - **Strikes:** a confirmed report is a strike, and so is a customer cancelling after the shop accepted.
+  - Strikes are kept in a `strikes` collection no app user can read, so the reported person cannot trace a report back to an order or reporter.
   - 3 strikes in 30 days mean a 7-day suspension, which ends by itself (the sweep lifts it).
   - A confirmed safety report keeps the person suspended until an admin lifts it. A dismissed one lifts the suspension it caused.
   - Suspended customers can't order, suspended shops are hidden, and suspended riders go offline and can't go online.
+  - A **ban** is final: reports, strikes, the sweep and coordinators never change a banned account. Only an admin's *Reinstate* does (which also clears strikes).
 
 ## Coordinator and admin tools
 
@@ -189,8 +193,10 @@ For the emulator, copy `functions/.secret.local.example` to `functions/.secret.l
 - **Going online** goes through the `goOnline` function: it checks verification and the subscription and takes the Rider Daily fee once per day online (free during the trial). Riders still online after midnight are charged by the daily job, or go offline if out of balance.
 - **Paying:**
   - Shops and riders pay from their **Plan** tab: months for monthly plans, top-ups for Rider Daily.
-  - `PAYMENT_PROVIDER=mock` (default) uses a local test page. With `paymongo`, set the `PAYMONGO_SECRET_KEY` and `PAYMONGO_WEBHOOK_SECRET` secrets, `APP_BASE_URL`, and point a PayMongo webhook (event `checkout_session.payment.paid`) at the `paymongoWebhook` function.
-  - Coordinators record cash on **Coordinator → Payments** with the official receipt number.
+  - `PAYMENT_PROVIDER=paymongo` is the default. `mock` (set in `functions/.env.demo-hatod`) uses a local test page and only works inside the emulator, so a deploy can never hand out free plans. For PayMongo, set the `PAYMONGO_SECRET_KEY` and `PAYMONGO_WEBHOOK_SECRET` secrets, `APP_BASE_URL`, and point a PayMongo webhook (event `checkout_session.payment.paid`) at the `paymongoWebhook` function.
+  - The webhook checks the signature (live-mode signature only with a live key), the checkout session id, the mode and the amount paid.
+  - Coordinators record cash on **Coordinator → Payments** with the official receipt number. They cannot record payments for (or verify) their own shop or rider account; another coordinator or an admin must.
+  - **Switching plans** carries over the peso value of unused paid time, not the time: a month of Standard (₱199) becomes about half a month of Plus (₱399). Value parked on free Basic comes back as time on a paid plan. A checkout paid after a switch is credited by its value on the current plan.
   - Every payment is stored once by its reference (provider id or `cash_{town}_{receipt}`), so retries and duplicate receipts never count twice.
 - **Receipts:** online payments get an `E-…` reference. Cash payments carry the coordinator's official receipt number. BIR electronic invoicing is a later step.
 
@@ -200,9 +206,24 @@ For the emulator, copy `functions/.secret.local.example` to `functions/.secret.l
 npm test               # shared business logic + translation checks (Vitest, no emulators needed)
 npm run test:emulator  # Firestore rules + callable functions inside the emulators
 npm run test:all       # both
+npm run e2e            # Playwright: the 3 core flows in a phone browser against the emulators + seed
 npm run typecheck      # all workspaces
 npm run lint           # web app (includes the no-literal-text-in-JSX rule)
+npm run check:bundle   # after a web build: customer home must stay under 200 KB of JS
 ```
+
+**End-to-end tests** (`e2e/`): customer order to completion; a rider declines and the customer's second choice accepts; a rider whose subscription lapses disappears from rider selection. `npm run e2e` starts the emulators, and Playwright starts `next dev` (or reuses one on port 3000). Each test wipes and re-seeds Firestore. With emulators already running (`npm run dev`), use `npm run e2e:dev`. Traces are off; to debug a failure, run that test with `npx playwright test e2e/<file> --trace on`.
+
+## Performance and offline
+
+- **Customer home:** 129 KB first-load JS (budget 200 KB, checked by `npm run check:bundle`). Firebase loads after first paint. Links do not prefetch, to save mobile data. Auth skips Google's popup/redirect helper script, which phone sign-in does not need.
+- **Lighthouse mobile** (production build, default throttling): Performance 96, Accessibility 100, Best Practices 100; first paint 0.9 s, LCP 2.1 s.
+  - In a throttled browser at slow 3G (400 ms RTT, 400 kbps, 4× CPU), the page shows its main text at 1.4 s and finishes loading at about 4 s.
+  - Lighthouse's own slow-3G simulation reports first paint at 2.4 s and LCP around 6.5 s, because its model counts the deferred Firebase scripts against the paint.
+- **Offline:**
+  - Pages already opened are cached by the service worker. Menus, orders and addresses stay readable through Firestore's offline cache, and writes queue until the signal returns.
+  - A "Waiting for signal" bar shows while offline, and order buttons say "No signal" instead of a vague error.
+  - A page never opened before shows a precached "No signal" page in the phone's language.
 
 ## Environment keys
 
@@ -213,7 +234,7 @@ npm run lint           # web app (includes the no-literal-text-in-JSX rule)
 | `functions/.env.example` | Function params (`ADMIN_PHONES`). Copy to `functions/.env.<projectId>`. |
 | `functions/.env.demo-hatod` | Committed. Emulator-only params. |
 
-Keys arriving in later milestones (OpenRouteService, Semaphore SMS, PayMongo) will be added to these example files as each provider is built. Secrets will go in Cloud Secret Manager (`firebase functions:secrets:set`), never in the client.
+Secrets (Semaphore, OpenRouteService, PayMongo) live in Cloud Secret Manager (`firebase functions:secrets:set`), never in the client. For the emulator, put test values in `functions/.secret.local` (see `functions/.secret.local.example`).
 
 ## Roles
 
@@ -232,7 +253,14 @@ One-time setup:
 2. Enable **Phone** sign-in under Authentication and add your web domain to the authorized domains.
 3. Create a Firestore database in `asia-southeast1` (Singapore).
 4. Create an **App Hosting** backend that points at this repo with root directory `apps/web`. Fill the `NEXT_PUBLIC_FIREBASE_*` values in `apps/web/apphosting.yaml` or in the console.
-5. Create `functions/.env.<projectId>` with `ADMIN_PHONES=+63...` for the first admin.
+5. Create `functions/.env.<projectId>` from `functions/.env.example`: `ADMIN_PHONES=+63...` for the first admin, `SMS_PROVIDER=semaphore`, `PAYMENT_PROVIDER=paymongo`, `APP_BASE_URL=https://your-domain`.
+6. Set the secrets: `firebase functions:secrets:set SEMAPHORE_API_KEY` (and `ORS_API_KEY`, `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET`).
+7. Tell the rules which Storage bucket images may come from (image uploads are refused until this is set):
+   `GCLOUD_PROJECT=<id> STORAGE_BUCKET=<bucket> npx tsx scripts/set-config.ts`
+8. In PayMongo, add a webhook for `checkout_session.payment.paid` pointing at the `paymongoWebhook` function URL.
+9. For web push, create a Web Push certificate (Cloud Messaging settings) and set `NEXT_PUBLIC_FCM_VAPID_KEY`.
+
+Functions run on **Node.js 24** (`.nvmrc`); local development works on Node 22 or newer.
 
 Each release:
 

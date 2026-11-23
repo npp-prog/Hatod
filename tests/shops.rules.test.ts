@@ -77,6 +77,7 @@ beforeEach(async () => {
   await env.clearStorage();
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
+    await setDoc(doc(db, 'config/app'), { storageBucket: `${PROJECT}.appspot.com` });
     await setDoc(doc(db, 'barangays/t1__mabini'), { townId: 't1', name: 'Mabini' });
     await setDoc(doc(db, 'barangays/t1__rizal'), { townId: 't1', name: 'Rizal' });
     await setDoc(doc(db, 'barangays/t2__x'), { townId: 't2', name: 'X' });
@@ -156,6 +157,9 @@ describe('owner edits', () => {
   });
   it('rejects images hosted elsewhere or in another shop\'s folder', async () => {
     await assertFails(upd({ photos: ['https://evil.example/x.jpg'] }));
+    // Same folder path, but another host or another project's bucket.
+    await assertFails(upd({ photos: [`https://evil.example/v0/b/${PROJECT}.appspot.com/o/shops%2Fpending%2Fpublic%2Fa.webp?alt=media`] }));
+    await assertFails(upd({ photos: ['https://firebasestorage.googleapis.com/v0/b/evil-project.appspot.com/o/shops%2Fpending%2Fpublic%2Fa.webp?alt=media'] }));
     await assertFails(upd({ photos: [IMG('listed')] }));
     await assertFails(upd({ gcashQrUrl: 'https://evil.example/qr.png' }));
   });

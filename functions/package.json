@@ -5,7 +5,7 @@
   "description": "Hatod Cloud Functions. Business rules come from @hatod/shared and are bundled in at build time.",
   "main": "lib/index.js",
   "engines": {
-    "node": "22"
+    "node": "24"
   },
   "scripts": {
     "build": "tsup",

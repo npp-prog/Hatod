@@ -11,13 +11,21 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 // App shell precache + Serwist's default runtime caching (pages network-first,
-// static assets cache-first). Menu and order caching is added in M5/M6.
+// static assets cache-first). Menus and orders also stay readable offline via
+// Firestore's persistent cache. A page never opened before falls back to the
+// precached "No signal" page in the phone's language.
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
+  fallbacks: {
+    entries: [
+      { url: '/fil/offline', matcher: ({ request }) => request.destination === 'document' && new URL(request.url).pathname.startsWith('/fil') },
+      { url: '/offline', matcher: ({ request }) => request.destination === 'document' },
+    ],
+  },
 });
 
 serwist.addEventListeners();

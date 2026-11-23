@@ -50,7 +50,7 @@ export async function sweep(now = Date.now()) {
   let lifted = 0;
   for (const coll of ['users', 'riders', 'shops']) {
     const due = await db.collection(coll).where('suspendedReason', '==', 'strikes').where('suspendedUntil', '<=', ts).limit(200).get();
-    for (const d of due.docs) await d.ref.update(liftFields);
+    for (const d of due.docs) if (d.get('status') === 'suspended') await d.ref.update(liftFields);
     lifted += due.size;
   }
 

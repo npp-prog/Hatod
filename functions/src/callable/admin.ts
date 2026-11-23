@@ -14,7 +14,7 @@ import { logAdminAction } from '../lib/audit';
 import { parseInput, requireAuth, type Caller } from '../lib/guards';
 import { notify } from '../lib/notify';
 import { ORS_API_KEY, SEMAPHORE_API_KEY } from '../lib/params';
-import { liftFields, suspensionFields, targetRef } from '../lib/strikes';
+import { isBanned, liftFields, strikesRef, suspensionFields, targetRef } from '../lib/strikes';
 import { ms } from '../orders/core';
 
 const fail = (code: 'permission-denied' | 'not-found' | 'failed-precondition', message: string): never => {
@@ -36,6 +36,9 @@ export const verifyListing = onCall({ secrets: [SEMAPHORE_API_KEY, ORS_API_KEY] 
     const snap = await tx.get(ref);
     if (!snap.exists) fail('not-found', 'not_found');
     if (!canManageTown(caller, snap.get('townId'))) fail('permission-denied', 'not_your_town');
+    // Nobody but an admin verifies their own listing.
+    const owner = input.kind === 'shop' ? snap.get('ownerId') : input.id;
+    if (owner === caller.uid && !hasRole(caller.claims.roles, 'admin')) fail('permission-denied', 'not_your_own');
     const approve = input.decision === 'approve';
     tx.update(ref, {
       verified: approve,
@@ -77,11 +80,26 @@ export const setAccountStatus = onCall(async (req) => {
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) fail('not-found', 'not_found');
-    const townId = input.type === 'customer' ? snap.get('defaultTownId') : snap.get('townId');
-    if (!isAdmin && !canManageTown(caller, townId)) fail('permission-denied', 'not_your_town');
     if (input.type === 'customer' && snap.id === caller.uid) fail('failed-precondition', 'not_yourself');
+    if (!isAdmin) {
+      if (input.type === 'customer') {
+        // A customer belongs to the towns they order in (defaultTownId is theirs
+        // to change). Coordinators and admins are only handled by admins.
+        const roles = (snap.get('roles') as string[] | undefined) ?? [];
+        if (roles.includes('admin') || roles.includes('coordinator')) fail('permission-denied', 'admin_only');
+        const towns = caller.claims.coordTowns ?? [];
+        const inTown = towns.length
+          ? await tx.get(db.collection('orders').where('customerId', '==', snap.id).where('townId', 'in', towns.slice(0, 30)).limit(1))
+          : null;
+        if (!inTown || inTown.empty) fail('permission-denied', 'not_your_town');
+      } else if (!canManageTown(caller, snap.get('townId'))) fail('permission-denied', 'not_your_town');
+    }
     const before = { status: snap.get('status'), suspendedReason: snap.get('suspendedReason') ?? null };
-    if (input.action === 'reinstate') tx.update(ref, { ...liftFields, strikes: [] });
+    if (input.action === 'suspend' && isBanned(snap)) fail('failed-precondition', 'already_banned');
+    if (input.action === 'reinstate') {
+      tx.update(ref, liftFields);
+      tx.delete(strikesRef(input.type, input.id));
+    }
     else if (input.action === 'ban')
       tx.update(ref, { status: 'banned', suspendedReason: 'banned', suspendedUntil: null, ...(input.type === 'rider' ? { online: false, approxLocation: null } : {}), updatedAt: FieldValue.serverTimestamp() });
     else tx.update(ref, suspensionFields(input.type, isAdmin ? 'admin' : 'coordinator', null));

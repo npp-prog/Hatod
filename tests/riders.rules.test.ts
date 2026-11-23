@@ -49,6 +49,7 @@ beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
+    await setDoc(doc(db, 'config/app'), { storageBucket: `${PROJECT}.appspot.com` });
     await setDoc(doc(db, 'riders/r1'), rider());
     await setDoc(doc(db, 'riders/r2'), rider({ userId: 'r2', verified: true, verificationStatus: 'approved' }));
     await setDoc(doc(db, 'riders/r3'), rider({ userId: 'r3', verified: true, status: 'suspended' }));

@@ -65,8 +65,11 @@ export interface OrderDoc {
   /** When the current waiting step times out (shop answer). */
   expiresAt: Timestamp | null;
   deliveredAt: Timestamp | null;
-  /** Stars given after completion, keyed "{fromRole}_{toType}" (e.g. customer_shop). */
-  ratings?: Record<string, number>;
+  /**
+   * Which ratings were given after completion, keyed "{fromRole}_{toType}" (e.g. customer_shop).
+   * Only a flag: the order is readable by every party, and nobody should see the stars they got.
+   */
+  ratings?: Record<string, boolean>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

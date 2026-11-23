@@ -57,7 +57,6 @@ export const completeProfile = onCall(async (req) => {
       shopIds: [],
       defaultTownId: null,
       status: 'active',
-      strikes: [],
       locale: input.locale,
       consent: {
         termsVersion: input.termsVersion,

@@ -16,6 +16,10 @@ async function person(phone: string, roles: string[], claims: Record<string, unk
   return p;
 }
 
+/** Strikes are kept in their own collection that no client can read. */
+const strikesOf = async (type: string, id: string) => ((await adminDb.doc(`strikes/${type}_${id}`).get()).get('list') ?? []) as { source: string }[];
+const clearStrikes = (type: string, id: string) => adminDb.doc(`strikes/${type}_${id}`).delete();
+
 const call = (p: Person, name: string, data: unknown) => callable(p.app, name)(data).then((r) => r.data);
 async function failsWith(promise: Promise<unknown>, message: string) {
   const err = (await promise.then(() => null, (e) => e)) as { message?: string } | null;
@@ -73,7 +77,8 @@ describe('ratings', () => {
     expect((await adminDb.doc(`users/${cust.uid}`).get()).data()).toMatchObject({ ratingAvg: 4.5, ratingCount: 2 });
     const r = (await adminDb.doc(`ratings/${id}_${cust.uid}_shop`).get()).data()!;
     expect(r).toMatchObject({ stars: 5, tags: ['tasty'], comment: 'Masarap!', fromRole: 'customer', toId: 'trust-shop' });
-    expect((await adminDb.doc(`orders/${id}`).get()).get('ratings')).toEqual({ customer_shop: 5, customer_rider: 2, shop_customer: 4, rider_customer: 5 });
+    expect((await adminDb.doc(`orders/${id}`).get()).get('ratings')).toEqual({ customer_shop: true, customer_rider: true, shop_customer: true, rider_customer: true });
+    // Only flags on the order: nobody reads the stars they were given there.
     await failsWith(call(cust, 'submitRating', { orderId: id, toType: 'shop', stars: 1 }), 'already_rated');
   });
   it('only parties rate, only the other side, only after completion', async () => {
@@ -104,7 +109,8 @@ describe('reports and strikes', () => {
     await call(coord, 'resolveReport', { reportId: ids[1], resolution: 'dismissed', note: 'Customer gave the wrong address.' });
     await call(coord, 'resolveReport', { reportId: ids[2], resolution: 'confirmed', note: 'Confirmed.' });
     let r = (await adminDb.doc(`riders/${rider.uid}`).get()).data()!;
-    expect(r.strikes).toHaveLength(2);
+    expect(await strikesOf('rider', rider.uid)).toHaveLength(2);
+    expect(r.strikes).toBeUndefined();
     expect(r.status).toBe('active');
     // a third confirmed report from another order
     const id = await makeOrder('COMPLETED');
@@ -121,7 +127,7 @@ describe('reports and strikes', () => {
     await sweep(Date.now() + 7 * 24 * 3600_000 + 60_000);
     r = (await adminDb.doc(`riders/${rider.uid}`).get()).data()!;
     expect(r).toMatchObject({ status: 'active', suspendedReason: null, suspendedUntil: null });
-    await adminDb.doc(`riders/${rider.uid}`).update({ strikes: [] });
+    await clearStrikes('rider', rider.uid);
   });
 
   it('a safety report suspends at once once people have met, until reviewed', async () => {
@@ -143,7 +149,8 @@ describe('reports and strikes', () => {
     expect(r).toMatchObject({ status: 'suspended', suspendedReason: 'safety', suspendedUntil: null });
     await sweep(Date.now() + 30 * 24 * 3600_000);
     expect((await adminDb.doc(`riders/${rider.uid}`).get()).get('status')).toBe('suspended');
-    await adminDb.doc(`riders/${rider.uid}`).update({ status: 'active', suspendedReason: null, strikes: [] });
+    await adminDb.doc(`riders/${rider.uid}`).update({ status: 'active', suspendedReason: null });
+    await clearStrikes('rider', rider.uid);
   });
 
   it('a safety report before anyone met does not suspend', async () => {
@@ -161,22 +168,80 @@ describe('reports and strikes', () => {
   });
 });
 
+describe('limits on instant safety suspensions', () => {
+  it('not for shops, not for old orders, and at most 2 per reporter in 30 days', async () => {
+    const shopCase = await makeOrder('DELIVERED');
+    await call(cust, 'submitReport', { orderId: shopCase, targetType: 'shop', category: 'safety', details: 'Food made my whole family sick.' });
+    expect((await adminDb.doc('shops/trust-shop').get()).get('status')).toBe('active');
+
+    const old = await makeOrder('COMPLETED');
+    const long = Timestamp.fromMillis(Date.now() - 3 * 24 * 3600_000);
+    await adminDb.doc(`orders/${old}`).update({ statusHistory: [{ status: 'RIDER_ASSIGNED', at: long, by: 'rider' }, { status: 'COMPLETED', at: long, by: 'system' }] });
+    await call(owner, 'submitReport', { orderId: old, targetType: 'customer', category: 'safety', details: 'Something from three days ago.' });
+    expect((await adminDb.doc(`users/${cust.uid}`).get()).get('status')).toBe('active');
+
+    // stranger plays a reporter who files safety reports again and again
+    const reporter = await person('+639176660007', ['customer']);
+    const statuses: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      const id = await makeOrder('PICKED_UP', { customerId: reporter.uid, participants: [reporter.uid, owner.uid, rider.uid] });
+      await call(reporter, 'submitReport', { orderId: id, targetType: 'rider', category: 'safety', details: `Unsafe driving, report ${i}.` });
+      statuses.push((await adminDb.doc(`riders/${rider.uid}`).get()).get('status'));
+      await call(coord, 'resolveReport', { reportId: `${id}_${reporter.uid}_rider`, resolution: 'dismissed', note: 'Not supported.' });
+    }
+    expect(statuses).toEqual(['suspended', 'suspended', 'active']);
+  });
+});
+
+describe('a ban is final', () => {
+  it('reports, strikes, the sweep and coordinators cannot turn a ban into something that lifts', async () => {
+    const admin = await person('+639176660008', ['customer', 'admin']);
+    await call(admin, 'setAccountStatus', { type: 'rider', id: rider.uid, action: 'ban', note: 'Theft confirmed by police.' });
+    const banned = async () => expect((await adminDb.doc(`riders/${rider.uid}`).get()).get('status')).toBe('banned');
+
+    // a friend files a safety report, the coordinator dismisses it
+    const id = await makeOrder('PICKED_UP');
+    await call(cust, 'submitReport', { orderId: id, targetType: 'rider', category: 'safety', details: 'Planted report to reset the ban.' });
+    await banned();
+    await call(coord, 'resolveReport', { reportId: `${id}_${cust.uid}_rider`, resolution: 'dismissed', note: 'Dismissed.' });
+    await banned();
+
+    // three confirmed strikes, then 7 days pass
+    for (let i = 0; i < 3; i++) {
+      const o = await makeOrder('COMPLETED');
+      await call(owner, 'submitReport', { orderId: o, targetType: 'rider', category: 'rude', details: `Rude again, number ${i}.` });
+      await call(coord, 'resolveReport', { reportId: `${o}_${owner.uid}_rider`, resolution: 'confirmed', note: 'Confirmed.' });
+    }
+    await banned();
+    await sweep(Date.now() + 8 * 24 * 3600_000);
+    await banned();
+
+    await failsWith(call(coord, 'setAccountStatus', { type: 'rider', id: rider.uid, action: 'suspend', note: 'Overwrite the ban.' }), 'already_banned');
+    await failsWith(call(coord, 'setAccountStatus', { type: 'rider', id: rider.uid, action: 'reinstate', note: 'Let him back.' }), 'admin_only');
+    await call(admin, 'setAccountStatus', { type: 'rider', id: rider.uid, action: 'reinstate', note: 'Cleared on appeal.' });
+    expect((await adminDb.doc(`riders/${rider.uid}`).get()).get('status')).toBe('active');
+    expect(await strikesOf('rider', rider.uid)).toEqual([]);
+  });
+});
+
 describe('late cancellations', () => {
   it('count as strikes: the third in 30 days suspends the customer', async () => {
-    await adminDb.doc(`users/${cust.uid}`).update({ strikes: [], status: 'active' });
+    await clearStrikes('customer', cust.uid);
+    await adminDb.doc(`users/${cust.uid}`).update({ status: 'active' });
     for (let i = 0; i < 3; i++) {
       const id = await makeOrder('SHOP_ACCEPTED', { riderId: null, rider: null });
       await call(cust, 'cancelOrder', { orderId: id, reason: 'changed_mind' });
     }
     const u = (await adminDb.doc(`users/${cust.uid}`).get()).data()!;
-    expect(u.strikes.map((s: { source: string }) => s.source)).toEqual(['late_cancel', 'late_cancel', 'late_cancel']);
+    expect((await strikesOf('customer', cust.uid)).map((x) => x.source)).toEqual(['late_cancel', 'late_cancel', 'late_cancel']);
     expect(u).toMatchObject({ status: 'suspended', suspendedReason: 'strikes' });
     // and a suspended customer cannot order
-    await adminDb.doc(`users/${cust.uid}`).update({ status: 'active', strikes: [], suspendedReason: null, suspendedUntil: null });
+    await adminDb.doc(`users/${cust.uid}`).update({ status: 'active', suspendedReason: null, suspendedUntil: null });
+    await clearStrikes('customer', cust.uid);
   });
   it('a free cancel (before the shop accepts) is not a strike', async () => {
     const id = await makeOrder('PLACED', { riderId: null, rider: null, participants: [] });
     await call(cust, 'cancelOrder', { orderId: id, reason: null });
-    expect((await adminDb.doc(`users/${cust.uid}`).get()).get('strikes')).toEqual([]);
+    expect(await strikesOf('customer', cust.uid)).toEqual([]);
   });
 });

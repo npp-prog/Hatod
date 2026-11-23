@@ -92,12 +92,17 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.userId == request.auth.uid;
     }
 
-    // Shop images live in Storage under shops/{shopId}/public/. URLs written by
-    // clients must point there, so a listing cannot show images from elsewhere.
-    function isShopImageUrl(url, shopId) {
+    // Images live in this project's Storage bucket (named in config/app) under
+    // .../public/. URLs written by clients must be download URLs of that exact
+    // bucket and folder, so a listing cannot show (or later swap in) images
+    // hosted anywhere else. The local emulator host is allowed for development.
+    function storageImageUrl(url, folder) {
+      let bucket = get(/databases/$(database)/documents/config/app).data.storageBucket.replace('[.]', '[.]');
       return url is string && url.size() < 1000
-        && url.matches('^https?://[^ ]+/o/shops%2F' + shopId + '%2Fpublic%2F[^ ]+$');
+        && url.matches('^(https://firebasestorage[.]googleapis[.]com|http://(127[.]0[.]0[.]1|localhost):9199)/v0/b/'
+          + bucket + '/o/' + folder + '%2Fpublic%2F[A-Za-z0-9._-]+[?]alt=media(&token=[0-9a-f-]+)?$');
     }
+    function isShopImageUrl(url, shopId) { return storageImageUrl(url, 'shops%2F' + shopId); }
     function nullOrShopImage(url, shopId) { return url == null || isShopImageUrl(url, shopId); }
 
     // shops: public once verified and active. The owner edits listing, menu and
@@ -207,8 +212,7 @@ service cloud.firestore {
         && d().vehicleType in ['motorcycle', 'bicycle', 'tricycle']
         && trimmedLen(d().vehicleDesc, 2, 60)
         && d().plateNo is string && d().plateNo.size() <= 16
-        && (d().photoUrl == null || (d().photoUrl is string && d().photoUrl.size() < 1000
-            && d().photoUrl.matches('^https?://[^ ]+/o/riders%2F' + uid + '%2Fpublic%2F[^ ]+$')))
+        && (d().photoUrl == null || storageImageUrl(d().photoUrl, 'riders%2F' + uid))
         && d().rainOn is bool
         && d().online is bool
         // going online goes through the goOnline function (verification,
@@ -294,6 +298,12 @@ service cloud.firestore {
     }
 
     // Plan prices are public (shown on sign-up and subscription pages).
+    // App settings the rules need (e.g. config/app.storageBucket). Admin SDK only.
+    match /config/{id} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /plans/{code} {
       allow read: if true;
       allow write: if false;
