@@ -13,6 +13,7 @@ export function CoordNav() {
         { href: '/coordinator/verify', text: t('verify') },
         { href: '/coordinator/listings', text: t('listings') },
         { href: '/coordinator/reports', text: t('reports') },
+        { href: '/coordinator/payments', text: t('subs') },
         { href: '/coordinator/dashboard', text: t('dashboard') },
       ]}
     />

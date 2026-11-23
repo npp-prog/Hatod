@@ -1,4 +1,5 @@
 import { openStatus, type WeeklyHours } from './hours';
+import { shopIsFeatured, type PlanCode, type SubStatus } from './subscriptions';
 
 /** Server-maintained summary of a shop's menu, for listing and dish search. */
 export interface MenuSummary {
@@ -39,8 +40,10 @@ export function shopMatches(shop: { name: string; menuSummary?: MenuSummary | nu
   return q.every((t) => words.some((w) => w.startsWith(t)));
 }
 
-/** Home-screen order: open shops first, then rating (with enough ratings), then name. */
-export function sortShopsForHome<S extends { name: string; hours: WeeklyHours; closedOn: string | null; ratingAvg: number; ratingCount: number }>(
+/** Home-screen order: open shops first, then featured (Shop Plus), then rating (with enough ratings), then name. */
+export function sortShopsForHome<
+  S extends { name: string; hours: WeeklyHours; closedOn: string | null; ratingAvg: number; ratingCount: number; planCode?: PlanCode | null; subscriptionStatus?: SubStatus | null },
+>(
   shops: S[],
   now: Date,
 ): (S & { isOpen: boolean })[] {
@@ -49,6 +52,8 @@ export function sortShopsForHome<S extends { name: string; hours: WeeklyHours; c
     .sort(
       (a, b) =>
         Number(b.isOpen) - Number(a.isOpen) ||
+        // Shop Plus: featured placement (only among shops in the same open/closed group)
+        Number(shopIsFeatured(b)) - Number(shopIsFeatured(a)) ||
         (b.ratingCount >= 3 ? b.ratingAvg : 0) - (a.ratingCount >= 3 ? a.ratingAvg : 0) ||
         a.name.localeCompare(b.name),
     );

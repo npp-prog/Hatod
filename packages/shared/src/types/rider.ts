@@ -1,6 +1,7 @@
 import type { RateCard } from '../fees';
 import type { RiderDocKey, VehicleType } from '../riders';
 import type { VerificationStatus } from '../shops';
+import type { PlanCode, SubStatus } from '../subscriptions';
 import type { Timestamp } from './user';
 
 /**
@@ -30,6 +31,9 @@ export interface RiderDoc {
   rateCard: RateCard;
   rateUpdatedAt: Timestamp | null;
   planId: string | null;
+  /** Copied from the rider's subscription by Cloud Functions. */
+  planCode?: PlanCode | null;
+  subscriptionStatus?: SubStatus | null;
   ratingAvg: number;
   ratingCount: number;
   completedCount: number;

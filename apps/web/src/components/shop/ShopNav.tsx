@@ -14,6 +14,7 @@ export function ShopNav() {
         { href: '/shop/menu', text: t('menu') },
         { href: '/shop/hours', text: t('hours') },
         { href: '/shop/profile', text: t('profile') },
+        { href: '/shop/subscription', text: t('plan') },
       ]}
     />
   );

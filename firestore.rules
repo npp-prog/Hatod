@@ -211,8 +211,9 @@ service cloud.firestore {
             && d().photoUrl.matches('^https?://[^ ]+/o/riders%2F' + uid + '%2Fpublic%2F[^ ]+$')))
         && d().rainOn is bool
         && d().online is bool
-        // only a verified, active rider can go online
-        && (d().online == false || (resource.data.verified == true && resource.data.status == 'active'))
+        // going online goes through the goOnline function (verification,
+        // subscription and the Rider Daily charge); the app may only go offline
+        && (d().online == false || resource.data.online == true)
         && (!changed().hasAny(['online', 'lastActiveAt']) || d().lastActiveAt == request.time)
         // approximate location: only while online, rounded to 2 decimals (about 1 km) for privacy
         && (!('approxLocation' in d()) || d().approxLocation == null
@@ -289,6 +290,29 @@ service cloud.firestore {
     // coordinators and admins can read them. The reported person cannot.
     match /reports/{id} {
       allow read: if signedIn() && (resource.data.reporterId == request.auth.uid || isAdmin() || isCoordinatorOf(resource.data.townId));
+      allow write: if false;
+    }
+
+    // Plan prices are public (shown on sign-up and subscription pages).
+    match /plans/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Subscriptions and their payments: the owner, that town's coordinators
+    // and admins. Written only by Cloud Functions (payments are idempotent).
+    match /subscriptions/{id} {
+      function canSee(d) { return signedIn() && (d.ownerUid == request.auth.uid || isAdmin() || isCoordinatorOf(d.townId)); }
+      allow read: if canSee(resource.data);
+      allow write: if false;
+      match /payments/{ref} {
+        allow read: if canSee(get(/databases/$(database)/documents/subscriptions/$(id)).data);
+        allow write: if false;
+      }
+    }
+
+    match /checkouts/{id} {
+      allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
       allow write: if false;
     }
 

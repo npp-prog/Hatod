@@ -14,6 +14,7 @@ import { useNow } from '@/lib/useNow';
 
 export function ShopDashboard() {
   const t = useTranslations('shop');
+  const tp = useTranslations('plans');
   const { shop, menu } = useShop();
   const now = useNow();
   const today = manilaParts(now).date;
@@ -42,6 +43,12 @@ export function ShopDashboard() {
         status={shop.status !== 'active' ? 'suspended' : shop.verified ? 'live' : shop.verificationStatus}
         note={(shop as { verificationNote?: string }).verificationNote}
       />
+
+      {shop.planCode && shop.planCode !== 'shop_basic' && (shop.subscriptionStatus === 'grace' || shop.subscriptionStatus === 'lapsed') && (
+        <Link href="/shop/subscription" className="block rounded-2xl border-2 border-danger bg-danger/10 p-4 font-semibold">
+          {shop.subscriptionStatus === 'grace' ? tp('status.grace') : tp('lapsedShop')}
+        </Link>
+      )}
 
       <section className="card space-y-4">
         <OpenStatusText hours={shop.hours} closedOn={shop.closedOn} />

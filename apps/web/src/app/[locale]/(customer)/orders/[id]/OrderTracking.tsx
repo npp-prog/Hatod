@@ -286,7 +286,7 @@ function ChooseAnotherRider({ order, onChoose, busy }: { order: Order; onChoose:
         estimate: order.distanceEstimate,
         at: new Date(),
       },
-      () => 'trial',
+      (id) => riders.find((r) => r.id === id)?.subscriptionStatus ?? 'trial',
       'price',
     );
   }, [riders, shop, order]);

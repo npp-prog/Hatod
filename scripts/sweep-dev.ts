@@ -13,10 +13,11 @@ async function main() {
   const { initializeApp } = await import('firebase-admin/app');
   initializeApp({ projectId: process.env.GCLOUD_PROJECT });
   const { sweep } = await import('../functions/src/jobs/sweep');
+  const { sweepSubscriptions } = await import('../functions/src/callable/subscriptions');
   const once = process.argv.includes('--once');
   do {
     try {
-      const r = await sweep();
+      const r = { ...(await sweep()), ...(await sweepSubscriptions()) };
       if (Object.values(r).some((n) => n > 0)) console.log(new Date().toISOString(), r);
     } catch (e) {
       console.warn('sweep failed (emulators not up yet?)', String(e).slice(0, 120));

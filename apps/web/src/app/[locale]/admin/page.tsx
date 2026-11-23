@@ -15,6 +15,9 @@ export default function Page() {
         <Link href="/coordinator/verify" className="btn-secondary">
           {tco('nav.verify')}
         </Link>
+        <Link href="/admin/plans" className="btn-secondary">
+          {t('plansLink')}
+        </Link>
         <Link href="/admin/towns" className="btn-secondary">
           {t('towns.title')}
         </Link>

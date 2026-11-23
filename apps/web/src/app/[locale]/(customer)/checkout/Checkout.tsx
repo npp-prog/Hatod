@@ -9,6 +9,7 @@ import {
   newCustomerCapExceeded,
   openStatus,
   riderOptions,
+  shopTakesOrders,
   type PaymentMethod,
   type RiderOption,
   type RiderSort,
@@ -97,8 +98,8 @@ export function Checkout() {
     };
   }, [shop, address, now]);
 
-  // TODO(M9): subscription status per rider; during the free trial every rider counts as subscribed.
-  const options = useMemo(() => (trip && riders ? riderOptions(riders, trip, () => 'trial', sort) : null), [trip, riders, sort]);
+  // Riders without a subscription record (created before plans) count as on trial.
+  const options = useMemo(() => (trip && riders ? riderOptions(riders, trip, (id) => riders.find((r) => r.id === id)?.subscriptionStatus ?? 'trial', sort) : null), [trip, riders, sort]);
   const chosen = options?.find((o) => o.rider.id === riderId) ?? null;
   useEffect(() => {
     if (riderId && options && !options.some((o) => o.rider.id === riderId)) setRiderId(null);
@@ -122,7 +123,7 @@ export function Checkout() {
   const status = openStatus(shop, now);
   const overCap = newCustomerCapExceeded(completedOrders, food);
   const cartProblems = issues.length > 0;
-  const canPlace = !!address && !!payment && (shop.hasOwnRider || !!chosen) && status.open && !overCap && !cartProblems;
+  const canPlace = !!address && !!payment && (shop.hasOwnRider || !!chosen) && status.open && !overCap && !cartProblems && shopTakesOrders(shop);
 
   async function place() {
     if (!address || !payment) return;
@@ -266,6 +267,7 @@ export function Checkout() {
           {tc('cart.shopClosed', { shop: shop.name, when: openText(status) })}
         </p>
       )}
+      {!shopTakesOrders(shop) && <FieldError id="basic-error">{tOrders('errors.shop_basic_no_orders')}</FieldError>}
       {overCap && <FieldError id="cap-error">{t('capWarning', { orders: NEW_CUSTOMER_ORDERS, cap: formatPHP(NEW_CUSTOMER_CAP) })}</FieldError>}
       {!shop.hasOwnRider && address && !chosen && options && options.length > 0 && <p className="text-muted">{t('chooseRiderFirst')}</p>}
       {error && <FieldError id="place-error">{error}</FieldError>}

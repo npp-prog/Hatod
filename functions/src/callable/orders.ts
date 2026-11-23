@@ -23,6 +23,8 @@ import {
   type OrderDoc,
   type OrderItem,
   type RateCard,
+  shopTakesOrders,
+  type SubscriptionStatus,
 } from '@hatod/shared';
 import { db } from '../lib/admin';
 import { parseInput, requireAuth } from '../lib/guards';
@@ -48,8 +50,6 @@ const fail = (code: 'failed-precondition' | 'permission-denied' | 'not-found' | 
   throw new HttpsError(code, message, details);
 };
 
-// TODO(M9): read each rider's subscription; during the free trial everyone counts as subscribed.
-const subscriptionOf = (_riderId: string) => 'trial' as const;
 
 /** Quote for one rider on this trip, or null if they cannot take it now. */
 function quoteRider(rider: FirebaseFirestore.DocumentSnapshot, trip: { fromBarangayId: string; toBarangayId: string; distanceKm: number; estimate: boolean }) {
@@ -66,7 +66,8 @@ function quoteRider(rider: FirebaseFirestore.DocumentSnapshot, trip: { fromBaran
   });
   const ok = riderEligibility(
     { verified: r.verified === true, status: r.status, online: r.online === true, servedBarangayIds: r.servedBarangayIds ?? [], maxKm: r.maxKm ?? 0 },
-    subscriptionOf(rider.id),
+    // Riders created before plans existed count as on trial.
+    (r.subscriptionStatus as SubscriptionStatus | undefined) ?? 'trial',
     { dropoffBarangayId: trip.toBarangayId, billedKm: quote.billedKm },
   );
   return ok.eligible ? quote : null;
@@ -103,6 +104,7 @@ export const placeOrder = onCall(withSecrets, async (req) => {
   const shop = shopSnap.data();
   if (!shop || shop.verified !== true || shop.status !== 'active') fail('failed-precondition', 'shop_unavailable');
   if (!openStatus({ hours: shop!.hours, closedOn: shop!.closedOn }, new Date()).open) fail('failed-precondition', 'shop_closed');
+  if (!shopTakesOrders(shop!)) fail('failed-precondition', 'shop_basic_no_orders');
   if (!(shop!.paymentMethods as string[]).includes(input.paymentMethod)) fail('invalid-argument', 'payment_not_accepted');
 
   const address = addressSnap.data();

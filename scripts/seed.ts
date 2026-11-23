@@ -224,6 +224,19 @@ async function main() {
       ),
     });
   }
+  // Subscriptions: everyone on the town's free trial; Rosa's sari-sari store chose free Basic.
+  const trialMs = trialEndsAt.toMillis();
+  const nowMs = Date.now();
+  const writeSub = async (type: 'shop' | 'rider', id: string, ownerUid: string, planCode: string, balance = 0) => {
+    const status = planCode === 'shop_basic' ? 'active' : 'trial';
+    await db.doc(`subscriptions/${type}_${id}`).set({
+      subscriberType: type, subscriberId: id, ownerUid, townId: DEMO_TOWN_ID, planCode, status,
+      trialEndsAt: trialMs, currentPeriodEnd: null, balance, lastChargedDate: null,
+      nextChangeAt: planCode === 'shop_basic' ? null : trialMs, createdAt: nowMs, updatedAt: nowMs,
+    });
+    await db.doc(`${type === 'shop' ? 'shops' : 'riders'}/${id}`).update({ planCode, subscriptionStatus: status });
+  };
+  for (const sh of SEED_SHOPS) await writeSub('shop', sh.id, sh.ownerUid, sh.id === 'demo-shop-rosa' ? 'shop_basic' : sh.id === 'demo-shop-susan' ? 'shop_plus' : 'shop_standard');
   console.log(`  Shops: ${SEED_SHOPS.filter((s) => s.verified).length} listed, ${SEED_SHOPS.filter((s) => !s.verified).length} waiting for verification`);
 
   // Riders.
@@ -267,6 +280,7 @@ async function main() {
       updatedAt: now,
     });
   }
+  for (const r of SEED_RIDERS) await writeSub('rider', r.uid, r.uid, r.uid === 'demo-rider-3' ? 'rider_daily' : 'rider_monthly', r.uid === 'demo-rider-3' ? 30 : 0);
   console.log(`  Riders: ${SEED_RIDERS.filter((r) => r.verified).length} verified (${SEED_RIDERS.filter((r) => r.online).length} online), ${SEED_RIDERS.filter((r) => !r.verified).length} waiting for verification`);
 
   // Two weeks of past orders so the dashboard has something to show.

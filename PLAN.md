@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M8 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M9 done**.
 
 ---
 
@@ -193,6 +193,19 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Pre-launch onboarding | A town can accept sign-ups before going live. Coordinators share `?town=` sign-up links; customers can't see the town yet. |
 | Dashboard | Computed on the server from orders in the period. "Active riders" means riders with a completed delivery in the last 7 days. The plan's "online 3+ days per week" needs online-day tracking, which isn't built yet. |
 | Fixed in testing | Sign-in redirects now keep the link's query string (`?town=`), not just the path. |
+
+### Decisions made during M9
+
+| Topic | Decision |
+|---|---|
+| Starting plan | New shops start on Standard, new riders on Monthly, both in the free trial; they can switch any time (paid time carries over). |
+| Month length | 30 days, so renewals are predictable. Paying early extends from the current end; paying during the trial extends from the trial end. |
+| Going online | Moved to a Cloud Function (`goOnline`) so the Rider Daily fee and the subscription check cannot be skipped. Going offline stays a direct write that works on weak signal. |
+| Basic shops | Listed with "Order by phone" (call and text), first 10 items, no in-app orders. Same for lapsed Standard/Plus shops, and their data is kept. |
+| Shop Plus | "Featured" means listed first among open shops. Weekly analytics and staff logins are marked "soon" (Phase 2). |
+| Payment safety | Payments are applied in one transaction and stored by reference, so webhook retries and repeated receipts can't double-count. PayMongo webhooks are verified (HMAC-SHA256, 5-minute window). |
+| Featured banner | Plan defined but not offered yet (needs the home banner feature). |
+| Fixed in testing | Going online again without a location no longer wipes the rider's rough location. |
 
 ### Original open questions (answered above)
 

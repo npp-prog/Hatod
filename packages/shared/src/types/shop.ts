@@ -2,6 +2,7 @@ import type { LatLng } from '../geo';
 import type { WeeklyHours } from '../hours';
 import type { AddOn, Variant } from '../menu';
 import type { MenuSummary } from '../browse';
+import type { PlanCode, SubStatus } from '../subscriptions';
 import type { PaymentMethod, ShopCategory, VerificationStatus } from '../shops';
 import type { Timestamp } from './user';
 
@@ -38,6 +39,9 @@ export interface ShopDoc {
   verificationStatus: VerificationStatus;
   status: 'active' | 'suspended' | 'banned';
   planId: string | null;
+  /** Copied from the shop's subscription by Cloud Functions. */
+  planCode?: PlanCode | null;
+  subscriptionStatus?: SubStatus | null;
   ratingAvg: number;
   ratingCount: number;
   /** Written by a Cloud Function whenever the menu changes. */

@@ -7,12 +7,15 @@ import {
   itemCount,
   itemsTotal,
   openStatus,
+  shopTakesOrders,
   startingPrice,
+  visibleMenuLimit,
   type OpenStatus,
 } from '@hatod/shared';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useCart } from '@/components/CartProvider';
+import { ContactButtons } from '@/components/orders/OrderBits';
 import { useLowData } from '@/components/LowDataProvider';
 import { PageTitle, Spinner } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
@@ -63,6 +66,10 @@ export function ShopPage({ shopId }: { shopId: string }) {
   }
 
   const status = openStatus(shop, now);
+  // Basic (free) and lapsed shops: listing and contact only, up to 10 items, no in-app orders.
+  const takesOrders = shopTakesOrders(shop);
+  const limit = visibleMenuLimit(shop);
+  const shown = menu && limit ? menu.slice(0, limit) : menu;
   const cats = [...shop.menuCategories, ...new Set((menu ?? []).map((m) => m.category).filter((c) => !shop.menuCategories.includes(c)))];
   const inCart = cart.shopId === shop.id ? cart.lines : [];
 
@@ -86,15 +93,25 @@ export function ShopPage({ shopId }: { shopId: string }) {
         {shop.hasOwnRider && <p className="font-semibold text-brand">{t('shopPage.selfDelivery', { fee: formatPHP(shop.selfDeliveryFee) })}</p>}
       </header>
 
+      {!takesOrders && (
+        <section className="space-y-2 rounded-2xl border-2 border-brand p-4" aria-labelledby="basic-title">
+          <h2 id="basic-title" className="font-bold">
+            {t('shopPage.basicTitle')}
+          </h2>
+          <p>{t('shopPage.basicBody')}</p>
+          <ContactButtons phone={shop.contactPhone} label={shop.name} />
+        </section>
+      )}
+
       {!status.open && (
         <p className="rounded-2xl border-2 border-warn bg-warn/20 p-4" role="status">
           <span className="font-bold">{t('shopPage.closedBanner', { when: openText(status) })}</span> {t('shopPage.closedCanBrowse')}
         </p>
       )}
 
-      {!menu ? (
+      {!shown ? (
         <Spinner label={t('common.loading')} />
-      ) : menu.length === 0 ? (
+      ) : shown.length === 0 ? (
         <p className="card">{t('shopPage.empty')}</p>
       ) : (
         <>
@@ -112,7 +129,7 @@ export function ShopPage({ shopId }: { shopId: string }) {
             </nav>
           )}
           {cats.map((c, i) => {
-            const items = menu.filter((m) => m.category === c);
+            const items = shown.filter((m) => m.category === c);
             if (!items.length) return null;
             return (
               <section key={c} id={`cat-${i}`} aria-labelledby={`cat-${i}-title`} className="scroll-mt-20">
@@ -127,7 +144,7 @@ export function ShopPage({ shopId }: { shopId: string }) {
                         <button
                           type="button"
                           className={`card flex w-full items-center gap-3 p-3 text-left ${item.available ? '' : 'opacity-60'}`}
-                          disabled={!item.available}
+                          disabled={!item.available || !takesOrders}
                           onClick={() => setPicked(item)}
                         >
                           {!lowData && item.photoUrl && (
@@ -147,7 +164,7 @@ export function ShopPage({ shopId }: { shopId: string }) {
                           </span>
                           {qty > 0 ? (
                             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand font-bold text-white">{qty}</span>
-                          ) : item.available ? (
+                          ) : item.available && takesOrders ? (
                             <span className="btn-secondary min-h-10 px-3" aria-hidden>
                               {t('shopPage.add')}
                             </span>

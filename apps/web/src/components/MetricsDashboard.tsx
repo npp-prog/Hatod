@@ -30,6 +30,12 @@ export function MetricsDashboard({ townId, days = 14 }: { townId: string | null;
     { label: t('repeatRate'), value: pct(m.repeatRate), hint: t('repeatHint', { count: m.customers }), target: '40%+' },
     { label: t('activeShops'), value: String(m.activeShops), hint: `${t('activeHint')} · ${t('listed')}: ${m.listedShops}`, target: '25+' },
     { label: t('activeRiders'), value: String(m.activeRiders), hint: `${t('activeHint')} · ${t('onlineNow')}: ${m.onlineRiders}`, target: '15+' },
+    {
+      label: t('trialToPaid'),
+      value: m.subscriptions ? pct(m.paidSubscriptions / m.subscriptions) : '—',
+      hint: t('paidHint', { paid: m.paidSubscriptions, total: m.subscriptions }),
+      target: '70%+',
+    },
   ];
   return (
     <div className="space-y-5">

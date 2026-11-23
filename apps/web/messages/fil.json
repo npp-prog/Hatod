@@ -183,7 +183,8 @@
       },
       "acceptingSignupsLabel": "Tumanggap ng sign-up ng tindahan at rider bago ilunsad"
     },
-    "dashboardLink": "Dashboard"
+    "dashboardLink": "Dashboard",
+    "plansLink": "Mga plano at presyo"
   },
   "legal": {
     "draftNotice": "Draft pa lamang. Susuriin ng abogado bago ilunsad.",
@@ -329,7 +330,8 @@
       "menu": "Menu",
       "hours": "Oras",
       "profile": "Profile",
-      "orders": "Mga order"
+      "orders": "Mga order",
+      "plan": "Plano"
     },
     "dash": {
       "pendingTitle": "Naghihintay ng verification",
@@ -493,7 +495,8 @@
       "rates": "Aking singil",
       "area": "Lugar na sineserbisyuhan",
       "profile": "Profile",
-      "jobs": "Trabaho"
+      "jobs": "Trabaho",
+      "plan": "Plano"
     },
     "register": {
       "title": "Maging Hatod rider",
@@ -692,7 +695,9 @@
     "otherShopBody": "May laman ang cart mo mula sa {shop}. Isang tindahan lang bawat order.",
     "otherShopConfirm": "Burahin ang cart at idagdag",
     "viewCart": "Tingnan ang cart · {count} · {total}",
-    "empty": "Wala pang menu ang tindahang ito."
+    "empty": "Wala pang menu ang tindahang ito.",
+    "basicTitle": "Umorder sa telepono",
+    "basicBody": "Tumatanggap ng order ang tindahang ito sa tawag o text. Tawagan sila para umorder."
   },
   "cart": {
     "title": "Iyong cart",
@@ -865,7 +870,8 @@
       "reason_required": "Pumili ng dahilan.",
       "order_expired": "Nag-expire na ang order na ito.",
       "generic": "May nangyaring mali. Suriin ang signal at subukang muli.",
-      "account_not_active": "Naka-suspend ang account mo. Kausapin ang town coordinator."
+      "account_not_active": "Naka-suspend ang account mo. Kausapin ang town coordinator.",
+      "shop_basic_no_orders": "Sa tawag o text lang tumatanggap ng order ang tindahang ito."
     }
   },
   "shopOrders": {
@@ -1037,7 +1043,8 @@
       "verify": "I-verify",
       "listings": "Tindahan at rider",
       "reports": "Mga report",
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "subs": "Bayad"
     },
     "pendingCount": "{count, plural, =0 {Walang ive-verify} one {# naghihintay ng verification} other {# naghihintay ng verification}}",
     "openReports": "Bukas na report",
@@ -1125,6 +1132,117 @@
     "chartDay": "{date}: {completed} natapos sa {placed}",
     "tableView": "Ipakita bilang table",
     "date": "Petsa",
-    "loadFailed": "Hindi ma-load ang mga numero."
+    "loadFailed": "Hindi ma-load ang mga numero.",
+    "trialToPaid": "Trial patungong bayad",
+    "paidHint": "{paid} sa {total} subscription ang nagbayad na"
+  },
+  "plans": {
+    "names": {
+      "shop_basic": "Basic",
+      "shop_standard": "Standard",
+      "shop_plus": "Plus",
+      "rider_daily": "Daily",
+      "rider_monthly": "Monthly",
+      "featured_banner": "Featured banner"
+    },
+    "per": {
+      "day": "/ araw na online",
+      "week": "/ linggo",
+      "month": "/ buwan"
+    },
+    "free": "Libre",
+    "features": {
+      "listing": "Nakalista sa app",
+      "contact": "Tatawag o magte-text sa iyo ang customer",
+      "menu_10": "Hanggang 10 menu item",
+      "full_menu": "Buong menu na may litrato at size",
+      "in_app_orders": "Order sa app na may tumutunog na inbox",
+      "order_history": "Kasaysayan ng order",
+      "sales_count": "Bilang ng benta",
+      "featured": "Nakatampok sa itaas ng kategorya mo",
+      "weekly_analytics": "Lingguhang analytics (malapit na)",
+      "staff_logins": "Login ng staff (malapit na)",
+      "rider_listing": "Nakalista kapag pumipili ng rider ang customer",
+      "job_offers": "Alok na trabaho na may tunog at SMS",
+      "ratings": "Rating at kasaysayan",
+      "home_banner": "Banner sa home screen"
+    },
+    "title": "Iyong plano",
+    "current": "Kasalukuyang plano",
+    "choose": "Lumipat sa {plan}",
+    "switching": "Lumilipat…",
+    "switched": "Napalitan ang plano.",
+    "status": {
+      "trial": "Libreng trial",
+      "active": "Aktibo",
+      "grace": "Dapat nang bayaran",
+      "lapsed": "Lapsed"
+    },
+    "trialUntil": "Libreng trial hanggang {date}. Walang babayaran bago iyon.",
+    "paidUntil": "Bayad hanggang {date}.",
+    "graceUntil": "Dapat nang bayaran. Magbayad bago {date} para tuloy-tuloy ang lahat.",
+    "lapsedShop": "Nag-lapse ang plano mo. Nakikita pa rin ng customer ang tindahan mo at puwede kang tawagan, pero hindi sila makaka-order sa app. Magbayad anumang oras para maibalik ang order.",
+    "lapsedRider": "Nag-lapse ang plano mo. Hindi ka mapipili ng customer hangga't hindi ka nagre-renew.",
+    "basicNote": "Libre ang Basic: nakikita ng customer ang tindahan mo at tatawag o magte-text sila. Kailangan ng Standard o Plus para sa order sa app.",
+    "payTitle": "Magbayad",
+    "months": "Buwan",
+    "pay": "Magbayad ng {amount} gamit ang {method}",
+    "paying": "Binubuksan ang bayaran…",
+    "gcash": "GCash",
+    "maya": "Maya",
+    "cashNote": "Puwede ring magbayad ng cash sa town coordinator. Laging humingi ng official receipt.",
+    "balance": "Prepaid na balanse",
+    "balanceNote": "{price} ang kinakaltas bawat araw na mag-online ka. {days, plural, =0 {Mag-top up para mag-online.} one {Sapat para sa # araw.} other {Sapat para sa # araw.}}",
+    "topUp": "Mag-top up ng {amount}",
+    "history": "Mga bayad",
+    "noPayments": "Wala pang bayad.",
+    "receipt": "Resibo {no}",
+    "topupKind": "Load",
+    "periodKind": "{n, plural, one {# buwan} other {# buwan}}",
+    "noFees": "Hindi kumukuha ang Hatod ng bahagi sa benta o delivery fee mo. Ito lang na flat na plano ang babayaran mo.",
+    "errors": {
+      "insufficient_balance": "Kulang ang balanse mo. Mag-top up para mag-online.",
+      "subscription_lapsed": "Nag-lapse ang plano mo. Mag-renew para mag-online.",
+      "not_verified": "Makakapag-online ka pagkatapos ng verification.",
+      "free_plan": "Libre ang Basic; walang babayaran.",
+      "generic": "May nangyaring mali. Pakisubukang muli."
+    }
+  },
+  "pay": {
+    "mockTitle": "Test na bayad",
+    "mockIntro": "Ito ang test na pahina ng bayad bago ikonekta ang PayMongo. Walang totoong perang gagalaw.",
+    "mockPay": "Magbayad ng {amount} (test)",
+    "doneTitle": "Bayad",
+    "waiting": "Hinihintay ang kumpirmasyon mula sa {provider}…",
+    "paid": "Natanggap ang bayad. Salamat!",
+    "cancelled": "Kinansela ang bayad. Walang siningil.",
+    "back": "Bumalik sa aking plano"
+  },
+  "subsAdmin": {
+    "title": "Mga subscription",
+    "intro": "Mga plano at bayad ng tindahan at rider sa bayang ito. Itala ang cash na bayad kasama ang official receipt number.",
+    "filterAll": "Lahat",
+    "due": "Due sa {date}",
+    "trialEnds": "Matatapos ang trial sa {date}",
+    "balance": "Balanse {amount}",
+    "record": "Itala ang cash",
+    "receiptNo": "Official receipt no.",
+    "months": "Buwan",
+    "topUp": "Halaga ng load (₱)",
+    "save": "Itala ang bayad",
+    "recorded": "Naitala ang {amount}.",
+    "errors": {
+      "receipt_already_used": "Naitala na ang receipt number na iyan.",
+      "receipt_required": "Ilagay ang receipt number.",
+      "bad_receipt": "Letra, numero at gitling lang.",
+      "generic": "Hindi maitala. Pakisubukang muli."
+    },
+    "conversion": "Nagbabayad na",
+    "plansTitle": "Mga plano at presyo",
+    "plansIntro": "Presyo bawat tier ng bayan, sa piso. Sa susunod na bayad magkakabisa.",
+    "tier": "Tier {t}",
+    "activeLabel": "Inaalok",
+    "savePlan": "I-save",
+    "saved": "Na-save."
   }
 }

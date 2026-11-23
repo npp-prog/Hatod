@@ -117,5 +117,10 @@ export const adminMetrics = onCall(async (req) => {
       return qq.count().get().then((r) => r.data().count);
     }),
   );
-  return { ...metrics, listedShops: shops, verifiedRiders: riders, onlineRiders };
+  // Trial to paid: of the paid plans (Basic is free), how many have ever paid.
+  let sq = db.collection('subscriptions').where('planCode', 'in', ['shop_standard', 'shop_plus', 'rider_daily', 'rider_monthly']);
+  if (input.townId) sq = sq.where('townId', '==', input.townId);
+  const subs = await sq.select('currentPeriodEnd', 'balance', 'lastChargedDate').get();
+  const paid = subs.docs.filter((d) => d.get('currentPeriodEnd') !== null || Number(d.get('balance') ?? 0) > 0 || d.get('lastChargedDate')).length;
+  return { ...metrics, listedShops: shops, verifiedRiders: riders, onlineRiders, subscriptions: subs.size, paidSubscriptions: paid };
 });

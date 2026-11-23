@@ -183,7 +183,8 @@
       },
       "acceptingSignupsLabel": "Accept shop and rider sign-ups before going live"
     },
-    "dashboardLink": "Dashboard"
+    "dashboardLink": "Dashboard",
+    "plansLink": "Plans and prices"
   },
   "legal": {
     "draftNotice": "Draft text. To be reviewed by a lawyer before launch.",
@@ -329,7 +330,8 @@
       "menu": "Menu",
       "hours": "Hours",
       "profile": "Profile",
-      "orders": "Orders"
+      "orders": "Orders",
+      "plan": "Plan"
     },
     "dash": {
       "pendingTitle": "Waiting for verification",
@@ -493,7 +495,8 @@
       "rates": "My rates",
       "area": "Service area",
       "profile": "Profile",
-      "jobs": "Jobs"
+      "jobs": "Jobs",
+      "plan": "Plan"
     },
     "register": {
       "title": "Become a Hatod rider",
@@ -692,7 +695,9 @@
     "otherShopBody": "Your cart has items from {shop}. One order can only have items from one shop.",
     "otherShopConfirm": "Clear cart and add",
     "viewCart": "View cart · {count} · {total}",
-    "empty": "This shop has not added its menu yet."
+    "empty": "This shop has not added its menu yet.",
+    "basicTitle": "Order by phone",
+    "basicBody": "This shop takes orders by call or text. Call them to order."
   },
   "cart": {
     "title": "Your cart",
@@ -865,7 +870,8 @@
       "reason_required": "Choose a reason.",
       "order_expired": "This order expired.",
       "generic": "Something went wrong. Check your signal and try again.",
-      "account_not_active": "Your account is suspended. Contact your town coordinator."
+      "account_not_active": "Your account is suspended. Contact your town coordinator.",
+      "shop_basic_no_orders": "This shop takes orders by call or text only."
     }
   },
   "shopOrders": {
@@ -1037,7 +1043,8 @@
       "verify": "Verify",
       "listings": "Shops & riders",
       "reports": "Reports",
-      "dashboard": "Dashboard"
+      "dashboard": "Dashboard",
+      "subs": "Payments"
     },
     "pendingCount": "{count, plural, =0 {Nothing to verify} one {# waiting for verification} other {# waiting for verification}}",
     "openReports": "Open reports",
@@ -1125,6 +1132,117 @@
     "chartDay": "{date}: {completed} completed of {placed}",
     "tableView": "Show as a table",
     "date": "Date",
-    "loadFailed": "Could not load the numbers."
+    "loadFailed": "Could not load the numbers.",
+    "trialToPaid": "Trial to paid",
+    "paidHint": "{paid} of {total} subscriptions have paid"
+  },
+  "plans": {
+    "names": {
+      "shop_basic": "Basic",
+      "shop_standard": "Standard",
+      "shop_plus": "Plus",
+      "rider_daily": "Daily",
+      "rider_monthly": "Monthly",
+      "featured_banner": "Featured banner"
+    },
+    "per": {
+      "day": "/ day online",
+      "week": "/ week",
+      "month": "/ month"
+    },
+    "free": "Free",
+    "features": {
+      "listing": "Listed in the app",
+      "contact": "Customers call or text you",
+      "menu_10": "Up to 10 menu items",
+      "full_menu": "Full menu with photos and sizes",
+      "in_app_orders": "Orders in the app with ringing inbox",
+      "order_history": "Order history",
+      "sales_count": "Sales counts",
+      "featured": "Featured at the top of your category",
+      "weekly_analytics": "Weekly analytics (soon)",
+      "staff_logins": "Staff logins (soon)",
+      "rider_listing": "Listed when customers choose a rider",
+      "job_offers": "Job offers with sound and SMS",
+      "ratings": "Ratings and history",
+      "home_banner": "Home-screen banner"
+    },
+    "title": "Your plan",
+    "current": "Current plan",
+    "choose": "Switch to {plan}",
+    "switching": "Switching…",
+    "switched": "Plan changed.",
+    "status": {
+      "trial": "Free trial",
+      "active": "Active",
+      "grace": "Payment due",
+      "lapsed": "Lapsed"
+    },
+    "trialUntil": "Free trial until {date}. Nothing to pay before then.",
+    "paidUntil": "Paid until {date}.",
+    "graceUntil": "Payment was due. Pay by {date} to keep everything working.",
+    "lapsedShop": "Your plan lapsed. Customers can still see your shop and call you, but cannot order in the app. Pay any time to restore orders.",
+    "lapsedRider": "Your plan lapsed. Customers cannot choose you until you renew.",
+    "basicNote": "Basic is free: customers see your shop and call or text you. In-app orders need Standard or Plus.",
+    "payTitle": "Pay",
+    "months": "Months",
+    "pay": "Pay {amount} with {method}",
+    "paying": "Opening payment…",
+    "gcash": "GCash",
+    "maya": "Maya",
+    "cashNote": "You can also pay cash to your town coordinator. Always ask for an official receipt.",
+    "balance": "Prepaid balance",
+    "balanceNote": "{price} is taken on each day you go online. {days, plural, =0 {Top up to go online.} one {Enough for # day.} other {Enough for # days.}}",
+    "topUp": "Top up {amount}",
+    "history": "Payments",
+    "noPayments": "No payments yet.",
+    "receipt": "Receipt {no}",
+    "topupKind": "Load",
+    "periodKind": "{n, plural, one {# month} other {# months}}",
+    "noFees": "Hatod never takes a share of your sales or delivery fees. This flat plan is all you pay.",
+    "errors": {
+      "insufficient_balance": "Your balance is too low. Top up to go online.",
+      "subscription_lapsed": "Your plan lapsed. Renew to go online.",
+      "not_verified": "You can go online after verification.",
+      "free_plan": "Basic is free; nothing to pay.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "pay": {
+    "mockTitle": "Test payment",
+    "mockIntro": "This is the test payment page used before PayMongo is connected. No real money moves.",
+    "mockPay": "Pay {amount} (test)",
+    "doneTitle": "Payment",
+    "waiting": "Waiting for confirmation from {provider}…",
+    "paid": "Payment received. Thank you!",
+    "cancelled": "Payment was cancelled. Nothing was charged.",
+    "back": "Back to my plan"
+  },
+  "subsAdmin": {
+    "title": "Subscriptions",
+    "intro": "Plans and payments for shops and riders in this town. Record cash payments with the official receipt number.",
+    "filterAll": "All",
+    "due": "Due {date}",
+    "trialEnds": "Trial ends {date}",
+    "balance": "Balance {amount}",
+    "record": "Record cash",
+    "receiptNo": "Official receipt no.",
+    "months": "Months",
+    "topUp": "Load amount (₱)",
+    "save": "Record payment",
+    "recorded": "Recorded {amount}.",
+    "errors": {
+      "receipt_already_used": "That receipt number was already recorded.",
+      "receipt_required": "Enter the receipt number.",
+      "bad_receipt": "Use letters, numbers and dashes only.",
+      "generic": "Could not record. Please try again."
+    },
+    "conversion": "Paying now",
+    "plansTitle": "Plans and prices",
+    "plansIntro": "Prices per town tier, in pesos. Changes apply to the next payment.",
+    "tier": "Tier {t}",
+    "activeLabel": "Offered",
+    "savePlan": "Save",
+    "saved": "Saved."
   }
 }

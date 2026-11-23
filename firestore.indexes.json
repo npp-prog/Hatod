@@ -361,6 +361,34 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "subscriptions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "planCode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "townId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "riders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "online",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "planCode",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

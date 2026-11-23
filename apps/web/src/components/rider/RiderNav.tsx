@@ -14,6 +14,7 @@ export function RiderNav() {
         { href: '/rider/rates', text: t('rates') },
         { href: '/rider/area', text: t('area') },
         { href: '/rider/profile', text: t('profile') },
+        { href: '/rider/subscription', text: t('plan') },
       ]}
     />
   );

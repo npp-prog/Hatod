@@ -130,7 +130,11 @@ Secrets for real projects:
 ```bash
 firebase functions:secrets:set SEMAPHORE_API_KEY
 firebase functions:secrets:set ORS_API_KEY
+firebase functions:secrets:set PAYMONGO_SECRET_KEY
+firebase functions:secrets:set PAYMONGO_WEBHOOK_SECRET
 ```
+
+and in `functions/.env.<projectId>`: `SMS_PROVIDER=semaphore`, `PAYMENT_PROVIDER=paymongo`, `APP_BASE_URL=https://your-domain`.
 
 For the emulator, copy `functions/.secret.local.example` to `functions/.secret.local`. Without it, you'll see harmless "secret not found" warnings and the fallbacks are used.
 
@@ -163,6 +167,32 @@ For the emulator, copy `functions/.secret.local.example` to `functions/.secret.l
 - **Every action is logged** in `adminLog` with who did it and the note.
 - **Pre-launch onboarding:** turn on sign-ups for a town that isn't live, import its barangays, then send the sign-up links from the coordinator overview (`/register/shop?town=…`, `/register/rider?town=…`). Customers still can't see the town until it is live.
 - **Seed data:** Santa Monica accepts sign-ups, and San Roque has 14 days of sample orders for the dashboard.
+
+## Plans and subscriptions
+
+- **Plans** (`plans` collection; admins edit prices per town tier at `/admin/plans`):
+
+  | Plan | Price | What it includes |
+  |---|---|---|
+  | Shop Basic | free | listing, contact, 10 items |
+  | Shop Standard | ₱199/month | in-app orders |
+  | Shop Plus | ₱399/month | featured first among open shops |
+  | Rider Daily | ₱5 per day online | prepaid balance |
+  | Rider Monthly | ₱69/month | |
+  | Featured banner | ₱150/week | defined, not offered yet |
+
+- **New shops and riders** start on a 60-day free trial (the town's trial date if it is set).
+- **Status:** trial → active (paid) → grace for 3 days after the paid period ends → lapsed. The daily `sweepSubscriptionsDaily` job (00:05 Manila) moves them and texts people.
+- **What a lapse means:**
+  - A lapsed or Basic shop stays listed but customers see "Order by phone" with call/text buttons, at most 10 items, and no in-app orders.
+  - A lapsed rider is taken offline and is hidden from rider selection.
+- **Going online** goes through the `goOnline` function: it checks verification and the subscription and takes the Rider Daily fee once per day online (free during the trial). Riders still online after midnight are charged by the daily job, or go offline if out of balance.
+- **Paying:**
+  - Shops and riders pay from their **Plan** tab: months for monthly plans, top-ups for Rider Daily.
+  - `PAYMENT_PROVIDER=mock` (default) uses a local test page. With `paymongo`, set the `PAYMONGO_SECRET_KEY` and `PAYMONGO_WEBHOOK_SECRET` secrets, `APP_BASE_URL`, and point a PayMongo webhook (event `checkout_session.payment.paid`) at the `paymongoWebhook` function.
+  - Coordinators record cash on **Coordinator → Payments** with the official receipt number.
+  - Every payment is stored once by its reference (provider id or `cash_{town}_{receipt}`), so retries and duplicate receipts never count twice.
+- **Receipts:** online payments get an `E-…` reference. Cash payments carry the coordinator's official receipt number. BIR electronic invoicing is a later step.
 
 ## Tests
 

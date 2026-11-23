@@ -2,7 +2,9 @@
 
 import { formatPHP, requiredRiderDocs } from '@hatod/shared';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { FieldError } from '@/components/ui';
+import { callableMessage } from '@/lib/firebase/errors';
 import { useRider } from '@/components/rider/RiderProvider';
 import { PageTitle, Switch } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
@@ -11,6 +13,8 @@ import { setOnline, updateRider } from '@/lib/data/riders';
 export function RiderDashboard() {
   const t = useTranslations('rider');
   const { rider, priv } = useRider();
+  const tp = useTranslations('plans');
+  const [onlineError, setOnlineError] = useState<string | null>(null);
   const canGoOnline = rider.verified && rider.status === 'active';
 
   const required = requiredRiderDocs(rider.vehicleType);
@@ -47,14 +51,26 @@ export function RiderDashboard() {
               checked={rider.online}
               label={t('dash.onlineLabel')}
               onChange={(on) => {
-                // No waiting for the server: on weak signal the write is queued
-                // and the switch must stay usable.
-                if (canGoOnline) void setOnline(rider.id, on).catch(() => {});
+                if (!canGoOnline) return;
+                setOnlineError(null);
+                // Going offline needs no server answer (works on weak signal); going online is checked.
+                void setOnline(rider.id, on).catch((e) => {
+                  const code = callableMessage(e) ?? 'generic';
+                  setOnlineError(tp.has(`errors.${code}` as 'errors.generic') ? tp(`errors.${code}` as 'errors.generic') : tp('errors.generic'));
+                });
               }}
             />
           </span>
         </div>
         {canGoOnline && <p className="text-sm text-muted">{t('dash.onlineAuto')}</p>}
+        {onlineError && (
+          <div className="space-y-2">
+            <FieldError id="online-error">{onlineError}</FieldError>
+            <Link href="/rider/subscription" className="btn-secondary">
+              {tp('title')}
+            </Link>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
           <div>

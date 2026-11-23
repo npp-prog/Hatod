@@ -25,6 +25,7 @@ export interface RiderForQuote {
   ratingAvg: number;
   ratingCount: number;
   approxLocation?: LatLng | null;
+  subscriptionStatus?: SubscriptionStatus | null;
 }
 
 export interface RiderOption<R extends RiderForQuote = RiderForQuote> {

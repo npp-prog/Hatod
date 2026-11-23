@@ -13,6 +13,7 @@ import {
 } from '@hatod/shared';
 import { db } from '../lib/admin';
 import { syncClaims } from '../lib/claims';
+import { createSubscription } from '../lib/subscriptions';
 import { parseInput, requireAuth, requireRole } from '../lib/guards';
 
 /**
@@ -65,6 +66,15 @@ export const registerRider = onCall(async (req) => {
       createdAt: now,
       updatedAt: now,
     });
+    const plan = createSubscription(tx, {
+      type: 'rider',
+      id: caller.uid,
+      ownerUid: caller.uid,
+      townId: input.townId,
+      townTrialEndsAt: (town.get('trialEndsAt') as { toMillis(): number } | null)?.toMillis() ?? null,
+      targetRef: riderRef,
+    });
+    tx.update(riderRef, plan);
     tx.create(riderRef.collection('private').doc('info'), {
       legalName: user.get('name'),
       phone: user.get('phone'),

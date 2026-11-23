@@ -3,6 +3,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { normalizeRoles, registerShopInput, roundLatLng, type Role, type WeeklyHours } from '@hatod/shared';
 import { db } from '../lib/admin';
 import { syncClaims } from '../lib/claims';
+import { createSubscription } from '../lib/subscriptions';
 import { parseInput, requireAuth } from '../lib/guards';
 
 /** Starting hours a new shop can edit: 7 AM to 7 PM, Monday to Saturday. */
@@ -73,6 +74,15 @@ export const registerShop = onCall(async (req) => {
       createdAt: now,
       updatedAt: now,
     });
+    const plan = createSubscription(tx, {
+      type: 'shop',
+      id: shopRef.id,
+      ownerUid: caller.uid,
+      townId: input.townId,
+      townTrialEndsAt: (town.get('trialEndsAt') as { toMillis(): number } | null)?.toMillis() ?? null,
+      targetRef: shopRef,
+    });
+    tx.update(shopRef, plan);
     tx.create(shopRef.collection('private').doc('info'), {
       ownerName: user.get('name'),
       ownerPhone: user.get('phone'),
