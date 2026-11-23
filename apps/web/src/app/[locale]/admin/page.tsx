@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 
 export default function Page() {
   const t = useTranslations('admin');
+  const tc = useTranslations('areas.coordinator');
   return (
     <AreaHome area="admin">
       <div className="flex flex-wrap gap-3">
@@ -12,6 +13,9 @@ export default function Page() {
         </Link>
         <Link href="/admin/roles" className="btn-secondary">
           {t('roles.title')}
+        </Link>
+        <Link href="/coordinator/reports" className="btn-secondary">
+          {tc('reportsLink')}
         </Link>
       </div>
     </AreaHome>

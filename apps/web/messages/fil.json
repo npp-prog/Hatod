@@ -100,7 +100,8 @@
     },
     "coordinator": {
       "title": "Town coordinator",
-      "body": "I-verify ang mga tindahan at rider, itala ang cash na bayad at asikasuhin ang mga report."
+      "body": "I-verify ang mga tindahan at rider, itala ang cash na bayad at asikasuhin ang mga report.",
+      "reportsLink": "Mga report"
     },
     "admin": {
       "title": "Admin",
@@ -860,7 +861,8 @@
       "offer_closed": "Hindi na available ang trabahong ito.",
       "reason_required": "Pumili ng dahilan.",
       "order_expired": "Nag-expire na ang order na ito.",
-      "generic": "May nangyaring mali. Suriin ang signal at subukang muli."
+      "generic": "May nangyaring mali. Suriin ang signal at subukang muli.",
+      "account_not_active": "Naka-suspend ang account mo. Kausapin ang town coordinator."
     }
   },
   "shopOrders": {
@@ -937,5 +939,90 @@
     "enabled": "Naka-on ang notifications sa phone na ito.",
     "denied": "Naka-block ang notifications. Payagan ito sa settings ng browser.",
     "unsupported": "Hindi kaya ng browser na ito ang notifications. Makakatanggap ka pa rin ng SMS sa mahahalagang pangyayari."
+  },
+  "trust": {
+    "rateTitle": "Kumusta ang order?",
+    "rateShop": "I-rate ang {name}",
+    "rateRider": "I-rate ang rider mo, si {name}",
+    "rateCustomer": "I-rate ang customer, si {name}",
+    "stars": "{n, plural, one {# bituin} other {# bituin}}",
+    "starLabel": "{n} sa 5",
+    "comment": "Komento (opsyonal)",
+    "submit": "Ipadala ang rating",
+    "sending": "Ipinapadala…",
+    "thanks": "Salamat sa rating!",
+    "rated": "Na-rate ng {n} ★",
+    "tags": {
+      "tasty": "Masarap",
+      "well_packed": "Maayos ang balot",
+      "good_value": "Sulit",
+      "fast": "Mabilis",
+      "cold_food": "Malamig ang pagkain",
+      "wrong_item": "Maling item",
+      "small_serving": "Kaunti ang serving",
+      "slow": "Mabagal",
+      "friendly": "Mabait",
+      "careful": "Maingat",
+      "easy_to_reach": "Madaling makontak",
+      "late": "Huli",
+      "rude": "Bastos",
+      "unsafe_driving": "Delikadong pagmamaneho",
+      "easy_to_find": "Madaling hanapin",
+      "polite": "Magalang",
+      "paid_promptly": "Agad nagbayad",
+      "hard_to_find": "Mahirap hanapin",
+      "not_answering": "Hindi sumasagot"
+    },
+    "report": "I-report ang problema",
+    "reportTitle": "I-report ang problema",
+    "reportAbout": "Tungkol sa",
+    "reportTarget": {
+      "shop": "Ang tindahan",
+      "rider": "Ang rider",
+      "customer": "Ang customer"
+    },
+    "reportCategory": "Ano ang nangyari?",
+    "reportDetails": "Ikuwento ang nangyari",
+    "reportDetailsHint": "Binabasa ng town coordinator ang bawat report. Hindi malalaman ng inireport kung sino ang nag-report.",
+    "categories": {
+      "no_show": "Hindi dumating",
+      "wrong_order": "Mali o kulang ang item",
+      "rude": "Bastos o walang galang",
+      "overcharge": "Humingi ng sobrang bayad",
+      "late": "Sobrang huli",
+      "safety": "Problema sa kaligtasan (banta, harassment, aksidente)",
+      "other": "Iba pa"
+    },
+    "safetyNote": "Kung emergency, tumawag muna sa 911.",
+    "sendReport": "Ipadala ang report",
+    "reportSent": "Naipadala ang report. Titingnan ito ng town coordinator.",
+    "close": "Isara",
+    "errors": {
+      "already_rated": "Na-rate mo na ito.",
+      "already_reported": "Nai-report mo na ang order na ito.",
+      "details_too_short": "Pakikuwento ang nangyari (kahit 10 letra).",
+      "stars_required": "Pumili ng 1 hanggang 5 bituin.",
+      "rating_window_closed": "Sarado na ang rating 7 araw pagkatapos ng delivery.",
+      "generic": "Hindi maipadala. Pakisubukang muli."
+    }
+  },
+  "reports": {
+    "title": "Mga report",
+    "intro": "Mga report mula sa customer, tindahan at rider sa inyong bayan. Kumpirmahin para magbigay ng strike (3 sa 30 araw = 7 araw na suspension), o i-dismiss.",
+    "open": "Bukas na report",
+    "resolved": "Kamakailang napagpasyahan",
+    "empty": "Walang bukas na report.",
+    "urgent": "URGENT",
+    "suspendedNow": "Naka-suspend hanggang magpasya ka",
+    "about": "{type}: {name}",
+    "by": "Inireport ng {role}",
+    "order": "Order {code}",
+    "note": "Ano ang nalaman mo? (kailangan)",
+    "confirm": "Kumpirmahin (strike)",
+    "dismiss": "I-dismiss",
+    "confirmed": "Kinumpirma",
+    "dismissed": "Na-dismiss",
+    "noteRequired": "Sumulat muna ng maikling tala.",
+    "done": "Na-save."
   }
 }

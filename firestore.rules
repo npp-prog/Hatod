@@ -272,6 +272,26 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ratings: written by Cloud Functions. The rater, the rated shop or rider,
+    // that town's coordinators and admins can read them. Ratings of customers
+    // are for staff only (the customer sees just their average).
+    match /ratings/{id} {
+      allow read: if signedIn() && (
+        resource.data.fromUserId == request.auth.uid
+        || (resource.data.toType == 'shop' && resource.data.toId in (request.auth.token.shops is list ? request.auth.token.shops : []))
+        || (resource.data.toType == 'rider' && resource.data.toId == request.auth.uid)
+        || isAdmin()
+        || isCoordinatorOf(resource.data.townId));
+      allow write: if false;
+    }
+
+    // reports: written by Cloud Functions. The reporter, that town's
+    // coordinators and admins can read them. The reported person cannot.
+    match /reports/{id} {
+      allow read: if signedIn() && (resource.data.reporterId == request.auth.uid || isAdmin() || isCoordinatorOf(resource.data.townId));
+      allow write: if false;
+    }
+
     // Web push tokens a person registered on their own devices.
     match /users/{uid}/devices/{token} {
       allow read, delete: if isSelf(uid);

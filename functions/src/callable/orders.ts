@@ -28,6 +28,7 @@ import { db } from '../lib/admin';
 import { parseInput, requireAuth } from '../lib/guards';
 import { ORS_API_KEY, SEMAPHORE_API_KEY } from '../lib/params';
 import { roadDistanceKm } from '../lib/providers/routing';
+import { addStrike } from '../lib/strikes';
 import {
   actorFor,
   applyTimeouts,
@@ -375,7 +376,11 @@ export const cancelOrder = onCall(withSecrets, async (req) => {
     if (!actor || actor === 'rider') fail('permission-denied', 'cannot_cancel');
     if (cancelNeedsReason(order.status, actor!) && !input.reason) fail('invalid-argument', 'reason_required');
     const offerSnap = order.offerId ? await tx.get(offersCol().doc(order.offerId)) : null;
+    // A customer cancelling after the shop started is a late cancellation: it counts as a strike.
+    const lateCancel = actor === 'customer' && cancelNeedsReason(order.status, 'customer');
+    const customerSnap = lateCancel ? await tx.get(db.collection('users').doc(order.customerId)) : null;
     if (offerSnap?.exists && offerSnap.get('status') === 'pending') tx.update(offerSnap.ref, { status: 'cancelled', respondedAt: FieldValue.serverTimestamp() });
+    if (customerSnap?.exists) addStrike(tx, 'customer', customerSnap, { source: 'late_cancel', ref: order.id, at: Date.now() });
     transition(tx, ref, order, 'CANCELLED', actor!, { cancelReason: input.reason, cancelledBy: actor, offerId: null, expiresAt: null });
     const text = `Order ${orderCode(order)} was cancelled by the ${actor}.`;
     const others = [order.customerId, order.shopOwnerId, order.riderId ?? offerSnap?.get('riderId')].filter((u): u is string => !!u && u !== caller.uid);

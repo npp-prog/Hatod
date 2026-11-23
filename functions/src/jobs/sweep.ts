@@ -4,6 +4,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { ORDER_TIMING } from '@hatod/shared';
 import { db } from '../lib/admin';
 import { ORS_API_KEY, SEMAPHORE_API_KEY } from '../lib/params';
+import { liftFields } from '../lib/strikes';
 import { applyTimeouts, flush, getOrderIn, offersCol, orderCode, ordersCol, transition } from '../orders/core';
 
 /**
@@ -45,7 +46,15 @@ export async function sweep(now = Date.now()) {
 
   for (const r of idle.docs) await r.ref.update({ online: false, approxLocation: null, updatedAt: FieldValue.serverTimestamp() });
 
-  return { expiredOrders: placed.size, expiredOffers: offers.size, autoCompleted: delivered.size, ridersOffline: idle.size };
+  // 7-day strike suspensions end by themselves. (Safety suspensions wait for a person.)
+  let lifted = 0;
+  for (const coll of ['users', 'riders', 'shops']) {
+    const due = await db.collection(coll).where('suspendedReason', '==', 'strikes').where('suspendedUntil', '<=', ts).limit(200).get();
+    for (const d of due.docs) await d.ref.update(liftFields);
+    lifted += due.size;
+  }
+
+  return { expiredOrders: placed.size, expiredOffers: offers.size, autoCompleted: delivered.size, ridersOffline: idle.size, suspensionsLifted: lifted };
 }
 
 export const sweepOrders = onSchedule(

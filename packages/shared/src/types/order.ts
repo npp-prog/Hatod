@@ -65,6 +65,8 @@ export interface OrderDoc {
   /** When the current waiting step times out (shop answer). */
   expiresAt: Timestamp | null;
   deliveredAt: Timestamp | null;
+  /** Stars given after completion, keyed "{fromRole}_{toType}" (e.g. customer_shop). */
+  ratings?: Record<string, number>;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

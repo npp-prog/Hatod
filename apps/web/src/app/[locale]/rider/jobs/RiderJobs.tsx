@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { ContactButtons, ItemsTable } from '@/components/orders/OrderBits';
 import { SoundToggle } from '@/components/orders/SoundToggle';
 import { PushToggle } from '@/components/PushToggle';
+import { RatingForm } from '@/components/trust/RatingForm';
+import { ReportButton } from '@/components/trust/ReportButton';
 import { useRider } from '@/components/rider/RiderProvider';
 import { FieldError, PageTitle } from '@/components/ui';
 import { startAlert, stopAlert } from '@/lib/alertSound';
@@ -205,6 +207,7 @@ function ActiveJob({ order }: { order: Order }) {
           {order.riderPaid ? `✓ ${t('feeDone')}` : t('feeCollected')}
         </button>
       )}
+      <ReportButton orderId={order.id} targets={['customer', 'shop']} />
       {error && <FieldError id={`job-err-${order.id}`}>{error}</FieldError>}
     </article>
   );
@@ -212,6 +215,7 @@ function ActiveJob({ order }: { order: Order }) {
 
 function Earnings({ done }: { done: Order[] }) {
   const t = useTranslations('riderJobs');
+  const tt = useTranslations('trust');
   const today = manilaParts(new Date()).date;
   const weekAgo = Date.now() - 7 * 24 * 3600_000;
   const stats = useMemo(() => {
@@ -240,9 +244,15 @@ function Earnings({ done }: { done: Order[] }) {
       ) : (
         <ul className="divide-y divide-line">
           {done.slice(0, 20).map((o) => (
-            <li key={o.id} className="flex justify-between py-2">
-              <span>{`${orderCode(o)} · ${o.shopName} → ${o.dropoff.barangayName}`}</span>
-              <span className="font-semibold">{formatPHP(o.deliveryFee ?? 0)}</span>
+            <li key={o.id} className="space-y-2 py-2">
+              <div className="flex justify-between">
+                <span>{`${orderCode(o)} · ${o.shopName} → ${o.dropoff.barangayName}`}</span>
+                <span className="font-semibold">{formatPHP(o.deliveryFee ?? 0)}</span>
+              </div>
+              {o.status === 'COMPLETED' && (
+                <RatingForm orderId={o.id} toType="customer" title={tt('rateCustomer', { name: o.customerName })} already={o.ratings?.rider_customer} />
+              )}
+              <ReportButton orderId={o.id} targets={['customer', 'shop']} />
             </li>
           ))}
         </ul>

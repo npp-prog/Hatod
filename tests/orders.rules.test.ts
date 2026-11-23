@@ -77,3 +77,26 @@ describe('push devices', () => {
     await assertFails(setDoc(doc(as('x'), 'users/cust/devices/tok9'), { token: 'tok9', platform: 'web', updatedAt: serverTimestamp() }));
   });
 });
+
+describe('ratings and reports', () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, 'ratings/r-shop'), { fromUserId: 'cust', toType: 'shop', toId: 's1', townId: 't1', stars: 5 });
+      await setDoc(doc(db, 'ratings/r-cust'), { fromUserId: 'own', toType: 'customer', toId: 'cust', townId: 't1', stars: 2 });
+      await setDoc(doc(db, 'reports/p1'), { reporterId: 'cust', targetType: 'rider', targetId: 'rid', townId: 't1', status: 'open' });
+    });
+  });
+  it('the rater and the rated shop read a rating; customers do not see what shops said about them', async () => {
+    await assertSucceeds(getDoc(doc(as('cust'), 'ratings/r-shop')));
+    await assertSucceeds(getDoc(doc(as('own', { roles: ['shop'], shops: ['s1'] }), 'ratings/r-shop')));
+    await assertFails(getDoc(doc(as('cust'), 'ratings/r-cust')));
+    await assertFails(setDoc(doc(as('cust'), 'ratings/x'), { stars: 5 }));
+  });
+  it('the reported person cannot read the report; the reporter and town coordinator can', async () => {
+    await assertSucceeds(getDoc(doc(as('cust'), 'reports/p1')));
+    await assertFails(getDoc(doc(as('rid', { roles: ['rider'] }), 'reports/p1')));
+    await assertSucceeds(getDoc(doc(as('k', { roles: ['coordinator'], coordTowns: ['t1'] }), 'reports/p1')));
+    await assertFails(updateDoc(doc(as('k', { roles: ['coordinator'], coordTowns: ['t1'] }), 'reports/p1'), { status: 'resolved' }));
+  });
+});

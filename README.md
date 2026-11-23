@@ -134,6 +134,20 @@ firebase functions:secrets:set ORS_API_KEY
 
 For the emulator, copy `functions/.secret.local.example` to `functions/.secret.local`. Without it, you'll see harmless "secret not found" warnings and the fallbacks are used.
 
+## Ratings, reports and strikes
+
+- **Ratings:** after an order is completed, each side rates the other once (1–5 stars, quick tags, optional comment) within 7 days.
+  - The customer rates the shop and the rider; the shop and the rider each rate the customer.
+  - Averages on shops, riders and customers update in the same transaction.
+  - Ratings of customers are visible only to staff.
+- **Reports:** "Report a problem" is on the customer's order page, the shop's order cards and the rider's jobs and history.
+  - Reports land in the town coordinator's queue at `/coordinator/reports` (admins see every town). The reported person can't see who reported them.
+  - Safety reports are urgent: the coordinator gets an SMS. If people have already met on that order (a rider was assigned), the reported person is suspended at once until the coordinator decides.
+- **Strikes:** a confirmed report is a strike, and so is a customer cancelling after the shop accepted.
+  - 3 strikes in 30 days mean a 7-day suspension, which ends by itself (the sweep lifts it).
+  - A confirmed safety report keeps the person suspended until an admin lifts it. A dismissed one lifts the suspension it caused.
+  - Suspended customers can't order, suspended shops are hidden, and suspended riders go offline and can't go online.
+
 ## Tests
 
 ```bash

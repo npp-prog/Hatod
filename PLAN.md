@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M6 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M7 done**.
 
 ---
 
@@ -173,6 +173,16 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Alert sound | Generated with Web Audio (nothing to download). Needs one tap to enable, as browsers require. |
 | Rider activity | An online rider's app counts as activity (refreshed every 10 minutes); riders go offline after 2 hours idle. |
 | Not yet | Late-cancel strikes (M7), subscription checks for riders (M9), masked phone numbers (Phase 2). |
+
+### Decisions made during M7
+
+| Topic | Decision |
+|---|---|
+| Who rates whom | Customer → shop and rider; shop → customer; rider → customer. Once per side per order, within 7 days of completion. |
+| Who reports whom | Customer → shop, rider; shop → customer, rider; rider → customer, shop. One report per person per target per order. |
+| Safety reports | Suspend at once only if people met on that order (a rider was assigned); before that, they are urgent but do not suspend, to limit abuse. The coordinator gets an SMS. |
+| Strikes | Stored on the shop, rider or customer record; 3 in 30 days → 7-day suspension lifted automatically. Late customer cancellations count. Shops cancelling with a reason do not. |
+| Reports queue | Built now (needed to confirm strikes); the rest of the coordinator tools come in M8. |
 
 ### Original open questions (answered above)
 

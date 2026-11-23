@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { ContactButtons, ItemsTable, StatusBadge, useTime } from '@/components/orders/OrderBits';
 import { SoundToggle } from '@/components/orders/SoundToggle';
 import { PushToggle } from '@/components/PushToggle';
+import { RatingForm } from '@/components/trust/RatingForm';
+import { ReportButton } from '@/components/trust/ReportButton';
 import { useShop } from '@/components/shop/ShopProvider';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
 import { startAlert, stopAlert } from '@/lib/alertSound';
@@ -81,11 +83,7 @@ export function ShopOrders() {
           </h2>
           <ul className="space-y-2">
             {recent.map((o) => (
-              <li key={o.id} className="card flex flex-wrap items-center gap-2 p-3">
-                <span className="mr-auto font-semibold">{`${orderCode(o)} · ${o.customerName}`}</span>
-                <span>{formatPHP(o.itemsTotal)}</span>
-                <StatusBadge status={o.status} />
-              </li>
+              <RecentRow key={o.id} order={o} />
             ))}
           </ul>
         </section>
@@ -183,6 +181,7 @@ function NewOrderCard({ order, now }: { order: Order; now: Date }) {
           </button>
         </div>
       )}
+      <ReportButton orderId={order.id} targets={order.riderId ? ['customer', 'rider'] : ['customer']} />
       {error && <FieldError id={`err-${order.id}`}>{error}</FieldError>}
     </article>
   );
@@ -282,7 +281,26 @@ function ProgressCard({ order }: { order: Order }) {
             {t('cancelOrder')}
           </button>
         ))}
+      <ReportButton orderId={order.id} targets={order.riderId ? ['customer', 'rider'] : ['customer']} />
       {error && <FieldError id={`err-${order.id}`}>{error}</FieldError>}
     </article>
+  );
+}
+
+function RecentRow({ order }: { order: Order }) {
+  const tt = useTranslations('trust');
+  const done = order.status === 'COMPLETED';
+  return (
+    <li className="card space-y-2 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-auto font-semibold">{`${orderCode(order)} · ${order.customerName}`}</span>
+        <span>{formatPHP(order.itemsTotal)}</span>
+        <StatusBadge status={order.status} />
+      </div>
+      {done && (
+        <RatingForm orderId={order.id} toType="customer" title={tt('rateCustomer', { name: order.customerName })} already={order.ratings?.shop_customer} />
+      )}
+      {order.status !== 'EXPIRED' && <ReportButton orderId={order.id} targets={order.riderId ? ['customer', 'rider'] : ['customer']} />}
+    </li>
   );
 }

@@ -15,6 +15,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useCart } from '@/components/CartProvider';
 import { ContactButtons, ItemsTable, StatusBadge, Timeline, useTime } from '@/components/orders/OrderBits';
 import { PushToggle } from '@/components/PushToggle';
+import { RatingForm } from '@/components/trust/RatingForm';
+import { ReportButton } from '@/components/trust/ReportButton';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
 import { useRouter } from '@/i18n/navigation';
 import { fetchOnlineRiders, fetchShop } from '@/lib/data/browse';
@@ -29,6 +31,7 @@ export function OrderTracking({ orderId }: { orderId: string }) {
   const t = useTranslations('orders');
   const tc = useTranslations('common');
   const tp = useTranslations('shop.payments');
+  const tt = useTranslations('trust');
   const router = useRouter();
   const { addLine, replaceWith, cart } = useCart();
   const now = useNow(5000);
@@ -228,6 +231,20 @@ export function OrderTracking({ orderId }: { orderId: string }) {
             </button>
           </div>
         ))}
+
+      {s === 'COMPLETED' && (
+        <section className="card space-y-3" aria-labelledby="rate-title">
+          <h2 id="rate-title" className="text-lg font-bold">
+            {tt('rateTitle')}
+          </h2>
+          <RatingForm orderId={order.id} toType="shop" title={tt('rateShop', { name: order.shopName })} already={order.ratings?.customer_shop} />
+          {order.riderId && order.rider && (
+            <RatingForm orderId={order.id} toType="rider" title={tt('rateRider', { name: order.rider.name })} already={order.ratings?.customer_rider} />
+          )}
+        </section>
+      )}
+
+      {s !== 'PLACED' && <ReportButton orderId={order.id} targets={order.riderId ? ['shop', 'rider'] : ['shop']} />}
 
       {final && (
         <button type="button" className="btn-secondary w-full" onClick={reorder}>

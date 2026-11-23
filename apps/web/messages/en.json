@@ -100,7 +100,8 @@
     },
     "coordinator": {
       "title": "Town coordinator",
-      "body": "Verify shops and riders, record cash payments and handle reports."
+      "body": "Verify shops and riders, record cash payments and handle reports.",
+      "reportsLink": "Reports queue"
     },
     "admin": {
       "title": "Admin",
@@ -860,7 +861,8 @@
       "offer_closed": "This job is no longer available.",
       "reason_required": "Choose a reason.",
       "order_expired": "This order expired.",
-      "generic": "Something went wrong. Check your signal and try again."
+      "generic": "Something went wrong. Check your signal and try again.",
+      "account_not_active": "Your account is suspended. Contact your town coordinator."
     }
   },
   "shopOrders": {
@@ -937,5 +939,90 @@
     "enabled": "Notifications are on for this phone.",
     "denied": "Notifications are blocked. Allow them in your browser settings.",
     "unsupported": "This browser cannot show notifications. You will still get SMS for important events."
+  },
+  "trust": {
+    "rateTitle": "How was it?",
+    "rateShop": "Rate {name}",
+    "rateRider": "Rate your rider, {name}",
+    "rateCustomer": "Rate the customer, {name}",
+    "stars": "{n, plural, one {# star} other {# stars}}",
+    "starLabel": "{n} out of 5",
+    "comment": "Comment (optional)",
+    "submit": "Send rating",
+    "sending": "Sending…",
+    "thanks": "Thanks for rating!",
+    "rated": "Rated {n} ★",
+    "tags": {
+      "tasty": "Tasty",
+      "well_packed": "Well packed",
+      "good_value": "Good value",
+      "fast": "Fast",
+      "cold_food": "Food was cold",
+      "wrong_item": "Wrong item",
+      "small_serving": "Small serving",
+      "slow": "Slow",
+      "friendly": "Friendly",
+      "careful": "Careful",
+      "easy_to_reach": "Easy to reach",
+      "late": "Late",
+      "rude": "Rude",
+      "unsafe_driving": "Unsafe driving",
+      "easy_to_find": "Easy to find",
+      "polite": "Polite",
+      "paid_promptly": "Paid promptly",
+      "hard_to_find": "Hard to find",
+      "not_answering": "Not answering"
+    },
+    "report": "Report a problem",
+    "reportTitle": "Report a problem",
+    "reportAbout": "About",
+    "reportTarget": {
+      "shop": "The shop",
+      "rider": "The rider",
+      "customer": "The customer"
+    },
+    "reportCategory": "What happened?",
+    "reportDetails": "Tell us what happened",
+    "reportDetailsHint": "Your town coordinator reads every report. The person you report does not see who reported them.",
+    "categories": {
+      "no_show": "Did not show up",
+      "wrong_order": "Wrong or missing items",
+      "rude": "Rude or disrespectful",
+      "overcharge": "Asked for more money",
+      "late": "Very late",
+      "safety": "Safety problem (threat, harassment, accident)",
+      "other": "Something else"
+    },
+    "safetyNote": "For an emergency, call 911 first.",
+    "sendReport": "Send report",
+    "reportSent": "Report sent. Your town coordinator will look into it.",
+    "close": "Close",
+    "errors": {
+      "already_rated": "You already rated this.",
+      "already_reported": "You already reported this order.",
+      "details_too_short": "Please describe what happened (at least 10 characters).",
+      "stars_required": "Choose 1 to 5 stars.",
+      "rating_window_closed": "Ratings close 7 days after delivery.",
+      "generic": "Could not send. Please try again."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "intro": "Reports from customers, shops and riders in your town. Confirm a report to give a strike (3 in 30 days = 7-day suspension), or dismiss it.",
+    "open": "Open reports",
+    "resolved": "Recently decided",
+    "empty": "No open reports.",
+    "urgent": "URGENT",
+    "suspendedNow": "Suspended until you decide",
+    "about": "{type}: {name}",
+    "by": "Reported by the {role}",
+    "order": "Order {code}",
+    "note": "What did you find? (required)",
+    "confirm": "Confirm (strike)",
+    "dismiss": "Dismiss",
+    "confirmed": "Confirmed",
+    "dismissed": "Dismissed",
+    "noteRequired": "Write a short note first.",
+    "done": "Saved."
   }
 }
