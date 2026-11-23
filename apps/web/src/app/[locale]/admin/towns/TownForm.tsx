@@ -33,6 +33,7 @@ export function TownForm({ town }: { town?: Town }) {
   const [province, setProvince] = useState(town?.province ?? '');
   const [tier, setTier] = useState<TownTier>(town?.tier ?? 'C');
   const [isLive, setIsLive] = useState(town?.isLive ?? false);
+  const [acceptingSignups, setAcceptingSignups] = useState(town?.acceptingSignups ?? false);
   const trialDate = (town?.trialEndsAt as TimestampLike | undefined)?.toDate();
   const [trialEndsOn, setTrialEndsOn] = useState(trialDate ? manilaDateString(trialDate) : '');
   const [center, setCenter] = useState<LatLng | null>(town?.center ?? null);
@@ -49,6 +50,7 @@ export function TownForm({ town }: { town?: Town }) {
       province,
       tier,
       isLive,
+      acceptingSignups,
       trialEndsOn: trialEndsOn || null,
       center: center ?? { lat: NaN, lng: NaN },
       radiusKm: Number(radiusKm),
@@ -159,6 +161,11 @@ export function TownForm({ town }: { town?: Town }) {
       <label className="flex min-h-12 items-center gap-3">
         <input type="checkbox" className="size-6 accent-brand" checked={isLive} onChange={(e) => setIsLive(e.target.checked)} />
         <span className="font-semibold">{t('isLiveLabel')}</span>
+      </label>
+
+      <label className="flex min-h-12 items-center gap-3">
+        <input type="checkbox" className="size-6 accent-brand" checked={acceptingSignups} onChange={(e) => setAcceptingSignups(e.target.checked)} />
+        <span className="font-semibold">{t('acceptingSignupsLabel')}</span>
       </label>
 
       {message &&

@@ -18,7 +18,7 @@ export interface RiderDoc {
   plateNo: string;
   verified: boolean;
   verificationStatus: VerificationStatus;
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'banned';
   online: boolean;
   /** The rider's "it's raining" switch, which turns on their rain surcharge. */
   rainOn: boolean;

@@ -15,6 +15,8 @@ export const upsertTownInput = z.object({
   province: z.string().trim().min(2, 'province_required').max(60),
   tier: z.enum(TOWN_TIERS).default('C'),
   isLive: z.boolean().default(false),
+  /** Shops and riders may register before customers can see the town (pre-launch onboarding). */
+  acceptingSignups: z.boolean().default(false),
   /** ISO date (YYYY-MM-DD), end of the free trial in Philippine time; null = no trial date yet. */
   trialEndsOn: z
     .string()

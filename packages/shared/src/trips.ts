@@ -16,7 +16,7 @@ export function coarseLatLng(p: LatLng): LatLng {
 export interface RiderForQuote {
   id: string;
   verified: boolean;
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'banned';
   online: boolean;
   rainOn: boolean;
   servedBarangayIds: string[];

@@ -7,11 +7,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { emptyLocation, LocationFields, type LocationValue } from '@/components/LocationFields';
 import { ShopBasicsFields, toInt, type ShopBasics } from '@/components/shop/ShopBasicsFields';
-import { useTown } from '@/components/TownProvider';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
 import { Link, useRouter } from '@/i18n/navigation';
 import { fetchBarangays, type Barangay } from '@/lib/data/places';
 import { firebase } from '@/lib/firebase/client';
+import { useSignupTown } from '@/lib/data/useSignupTown';
 import { callableMessage, firstIssueCode } from '@/lib/firebase/errors';
 
 type Errors = Partial<Record<'name' | 'contactPhone' | 'paymentMethods' | 'selfDeliveryFee' | 'barangayId' | 'landmark' | 'geo' | 'form', string>>;
@@ -31,7 +31,7 @@ export function RegisterShopForm() {
   const tc = useTranslations('common');
   const router = useRouter();
   const { user, claims, refreshClaims } = useAuth();
-  const { town, loading: townLoading } = useTown();
+  const { town, loading: townLoading } = useSignupTown();
   const [barangays, setBarangays] = useState<Barangay[] | null>(null);
   const [basics, setBasics] = useState<ShopBasics>({
     name: '',

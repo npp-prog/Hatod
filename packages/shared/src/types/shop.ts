@@ -36,7 +36,7 @@ export interface ShopDoc {
   menuCategories: string[];
   verified: boolean;
   verificationStatus: VerificationStatus;
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'banned';
   planId: string | null;
   ratingAvg: number;
   ratingCount: number;

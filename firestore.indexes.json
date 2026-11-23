@@ -297,6 +297,70 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "townId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "shops",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "townId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "verificationStatus",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "riders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "townId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "verificationStatus",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "riders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "online",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "townId",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

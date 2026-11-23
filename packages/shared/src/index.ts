@@ -19,6 +19,7 @@ export * from './trips';
 export * from './browse';
 export * from './orders';
 export * from './trust';
+export * from './admin';
 export * from './types/user';
 export * from './types/places';
 export * from './types/shop';

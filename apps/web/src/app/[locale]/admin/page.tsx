@@ -5,9 +5,16 @@ import { Link } from '@/i18n/navigation';
 export default function Page() {
   const t = useTranslations('admin');
   const tc = useTranslations('areas.coordinator');
+  const tco = useTranslations('coord');
   return (
     <AreaHome area="admin">
       <div className="flex flex-wrap gap-3">
+        <Link href="/admin/dashboard" className="btn-primary">
+          {t('dashboardLink')}
+        </Link>
+        <Link href="/coordinator/verify" className="btn-secondary">
+          {tco('nav.verify')}
+        </Link>
         <Link href="/admin/towns" className="btn-secondary">
           {t('towns.title')}
         </Link>

@@ -38,7 +38,10 @@ export function ShopDashboard() {
   return (
     <div className="space-y-5">
       <PageTitle>{shop.name}</PageTitle>
-      <StatusBanner status={shop.status === 'suspended' ? 'suspended' : shop.verified ? 'live' : shop.verificationStatus} />
+      <StatusBanner
+        status={shop.status !== 'active' ? 'suspended' : shop.verified ? 'live' : shop.verificationStatus}
+        note={(shop as { verificationNote?: string }).verificationNote}
+      />
 
       <section className="card space-y-4">
         <OpenStatusText hours={shop.hours} closedOn={shop.closedOn} />
@@ -95,7 +98,7 @@ export function ShopDashboard() {
   );
 }
 
-function StatusBanner({ status }: { status: 'live' | 'pending' | 'approved' | 'rejected' | 'suspended' }) {
+function StatusBanner({ status, note }: { status: 'live' | 'pending' | 'approved' | 'rejected' | 'suspended'; note?: string }) {
   const t = useTranslations('shop.dash');
   const box = (cls: string, title: string, body?: ReactNode) => (
     <section className={`rounded-2xl p-4 ${cls}`} role="status">
@@ -105,6 +108,6 @@ function StatusBanner({ status }: { status: 'live' | 'pending' | 'approved' | 'r
   );
   if (status === 'live' || status === 'approved') return box('bg-ok text-white', t('liveTitle'));
   if (status === 'suspended') return box('bg-danger text-white', t('suspendedTitle'), t('suspendedBody'));
-  if (status === 'rejected') return box('bg-warn', t('rejectedTitle'), t('rejectedBody'));
+  if (status === 'rejected') return box('bg-warn', t('rejectedTitle'), note || t('rejectedBody'));
   return box('bg-warn/30 border-2 border-warn', t('pendingTitle'), t('pendingBody'));
 }

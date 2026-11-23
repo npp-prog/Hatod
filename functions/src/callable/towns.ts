@@ -25,6 +25,7 @@ export const adminUpsertTown = onCall(async (req) => {
     province: input.province,
     tier: input.tier,
     isLive: input.isLive,
+    acceptingSignups: input.acceptingSignups,
     trialEndsAt: input.trialEndsOn ? Timestamp.fromDate(endOfManilaDay(input.trialEndsOn)) : null,
     center: roundLatLng(input.center),
     radiusKm: input.radiusKm,

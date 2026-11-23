@@ -7,10 +7,10 @@ import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/components/AuthProvider';
 import { EmergencyContactFields } from '@/components/rider/EmergencyContactFields';
 import { VehicleFields, type VehicleValue } from '@/components/rider/VehicleFields';
-import { useTown } from '@/components/TownProvider';
 import { FieldError, PageTitle, Spinner } from '@/components/ui';
 import { Link, useRouter } from '@/i18n/navigation';
 import { firebase } from '@/lib/firebase/client';
+import { useSignupTown } from '@/lib/data/useSignupTown';
 import { callableMessage, firstIssueCode } from '@/lib/firebase/errors';
 
 const KNOWN = ['vehicle_desc_required', 'bad_plate', 'contact_name_required', 'bad_phone', 'relation_required', 'rider_exists'];
@@ -20,7 +20,7 @@ export function RegisterRiderForm() {
   const tc = useTranslations('common');
   const router = useRouter();
   const { claims, refreshClaims } = useAuth();
-  const { town, loading } = useTown();
+  const { town, loading } = useSignupTown();
   const [vehicle, setVehicle] = useState<VehicleValue>({ vehicleType: 'motorcycle', vehicleDesc: '', plateNo: '' });
   const [ec, setEc] = useState<EmergencyContact>({ name: '', phone: '', relation: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});

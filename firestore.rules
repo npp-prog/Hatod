@@ -48,7 +48,7 @@ service cloud.firestore {
     // towns: live towns are public (town picker); admins and that town's
     // coordinators also see towns that are not live yet. Written by admin functions.
     match /towns/{townId} {
-      allow read: if resource.data.isLive == true || isAdmin() || isCoordinatorOf(townId);
+      allow read: if resource.data.isLive == true || resource.data.acceptingSignups == true || isAdmin() || isCoordinatorOf(townId);
       allow write: if false;
     }
 

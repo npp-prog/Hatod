@@ -21,8 +21,10 @@ export function RoleGate({ area, requireSignIn = true, children }: { area: Area;
   const mustCompleteProfile = !loading && needsProfile;
 
   useEffect(() => {
-    if (mustSignIn) router.replace({ pathname: '/auth', query: { next: pathname } });
-    else if (mustCompleteProfile) router.replace({ pathname: '/auth/profile', query: { next: pathname } });
+    // Keep the query string too (e.g. a sign-up link's ?town=), not just the path.
+    const next = pathname + (typeof window !== 'undefined' ? window.location.search : '');
+    if (mustSignIn) router.replace({ pathname: '/auth', query: { next } });
+    else if (mustCompleteProfile) router.replace({ pathname: '/auth/profile', query: { next } });
   }, [mustSignIn, mustCompleteProfile, router, pathname]);
 
   if (loading || mustSignIn || mustCompleteProfile) return <Spinner label={t('common.loading')} />;

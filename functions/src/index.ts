@@ -18,3 +18,4 @@ export {
 } from './callable/orders';
 export { sweepOrders } from './jobs/sweep';
 export { resolveReport, submitRating, submitReport } from './callable/trust';
+export { adminMetrics, setAccountStatus, verifyListing } from './callable/admin';

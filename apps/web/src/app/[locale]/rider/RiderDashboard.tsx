@@ -28,6 +28,8 @@ export function RiderDashboard() {
         <Banner cls="bg-danger text-white" title={t('dash.suspendedTitle')} body={t('dash.suspendedBody')} />
       ) : rider.verified ? (
         <Banner cls="bg-ok text-white" title={t('dash.liveTitle')} />
+      ) : rider.verificationStatus === 'rejected' ? (
+        <Banner cls="bg-warn" title={t('dash.rejectedTitle')} body={(rider as { verificationNote?: string }).verificationNote} />
       ) : (
         <Banner cls="bg-warn/30 border-2 border-warn" title={t('dash.pendingTitle')} body={t('dash.pendingBody')} />
       )}

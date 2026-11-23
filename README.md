@@ -148,6 +148,22 @@ For the emulator, copy `functions/.secret.local.example` to `functions/.secret.l
   - A confirmed safety report keeps the person suspended until an admin lifts it. A dismissed one lifts the suspension it caused.
   - Suspended customers can't order, suspended shops are hidden, and suspended riders go offline and can't go online.
 
+## Coordinator and admin tools
+
+- **Coordinator area** (`/coordinator`, also open to admins, who can pick any town):
+  - **Overview:** how many are waiting for verification, open reports, and sign-up links for a town accepting sign-ups before launch.
+  - **Verify:** pending shops and riders. Each detail page shows their private details and documents (opened through short-lived links), with Approve or Reject; a rejection needs a note, which they see.
+  - **Shops & riders:** everyone in the town with their status. Coordinators can suspend (pending admin review); only admins ban or reinstate.
+  - **Reports:** the queue from M7.
+  - **Dashboard:** the plan's pilot numbers against their targets (completed orders, completion rate, time to a rider, repeat customers, active shops and riders) and completed orders per day.
+- **Admin** (`/admin`):
+  - Dashboard for one town or all towns.
+  - Towns, with a new "accept shop and rider sign-ups before going live" switch.
+  - People: roles plus suspend, ban and reinstate for customer accounts.
+- **Every action is logged** in `adminLog` with who did it and the note.
+- **Pre-launch onboarding:** turn on sign-ups for a town that isn't live, import its barangays, then send the sign-up links from the coordinator overview (`/register/shop?town=…`, `/register/rider?town=…`). Customers still can't see the town until it is live.
+- **Seed data:** Santa Monica accepts sign-ups, and San Roque has 14 days of sample orders for the dashboard.
+
 ## Tests
 
 ```bash

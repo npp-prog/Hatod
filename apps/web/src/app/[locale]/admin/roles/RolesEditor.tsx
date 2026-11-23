@@ -6,6 +6,7 @@ import { httpsCallable } from 'firebase/functions';
 import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { FieldError, PageTitle } from '@/components/ui';
+import { AccountActions } from '../../coordinator/listing/[kind]/[id]/ListingDetail';
 import { firebase } from '@/lib/firebase/client';
 import { callableMessage, firstIssueCode } from '@/lib/firebase/errors';
 
@@ -14,6 +15,8 @@ interface Found {
   name: string;
   roles: Role[];
   coordTowns: string[];
+  status: string;
+  suspendedReason: string | null;
 }
 
 const KNOWN_ERRORS = new Set(['cannot_remove_own_admin', 'coord_towns_without_role', 'unknown_town']);
@@ -54,6 +57,8 @@ export function RolesEditor() {
         name: String(data.name ?? ''),
         roles: normalizeRoles(data.roles),
         coordTowns: Array.isArray(data.coordTowns) ? data.coordTowns : [],
+        status: String(data.status ?? 'active'),
+        suspendedReason: (data.suspendedReason as string | null) ?? null,
       };
       setFound(f);
       setRoles(f.roles);
@@ -157,6 +162,16 @@ export function RolesEditor() {
             {busy ? tc('saving') : tc('save')}
           </button>
         </section>
+      )}
+      {found && (
+        <AccountActions
+          type="customer"
+          id={found.uid}
+          status={found.status}
+          reason={found.suspendedReason}
+          isAdmin
+          onDone={() => search({ preventDefault() {} } as FormEvent)}
+        />
       )}
     </div>
   );

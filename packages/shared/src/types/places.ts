@@ -8,6 +8,7 @@ export interface TownDoc {
   province: string;
   tier: TownTier;
   isLive: boolean;
+  acceptingSignups?: boolean;
   trialEndsAt: Timestamp | null;
   coordinatorIds: string[];
   center: LatLng;

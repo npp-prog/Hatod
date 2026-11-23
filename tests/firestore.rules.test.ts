@@ -37,6 +37,7 @@ beforeEach(async () => {
     const db = ctx.firestore();
     await setDoc(doc(db, 'towns/live-town'), { name: 'Live', isLive: true });
     await setDoc(doc(db, 'towns/new-town'), { name: 'New', isLive: false });
+    await setDoc(doc(db, 'towns/signup-town'), { name: 'Signups', isLive: false, acceptingSignups: true });
     await setDoc(doc(db, 'barangays/live-town__mabini'), { townId: 'live-town', name: 'Mabini' });
     await setDoc(doc(db, 'barangays/new-town__rizal'), { townId: 'new-town', name: 'Rizal' });
     await setDoc(doc(db, 'addresses/alice-home'), { ...address('alice'), createdAt: new Date(), updatedAt: new Date() });
@@ -126,6 +127,9 @@ describe('towns and barangays', () => {
     await assertSucceeds(
       getDocs(query(collection(env.unauthenticatedContext().firestore(), 'towns'), where('isLive', '==', true))),
     );
+  });
+  it('a town accepting sign-ups before launch can be opened by link', async () => {
+    await assertSucceeds(getDoc(doc(as('alice', ['customer']), 'towns/signup-town')));
   });
   it('towns that are not live are hidden from the public', async () => {
     await assertFails(getDoc(doc(as('alice', ['customer']), 'towns/new-town')));

@@ -37,6 +37,8 @@ const NEW_TOWN = {
   province: 'Demo Province',
   tier: 'C',
   isLive: false,
+  // pre-launch: coordinators can send sign-up links to shops and riders
+  acceptingSignups: true,
   center: { lat: 11.0201, lng: 122.5405 },
   radiusKm: 10,
 };
@@ -266,6 +268,56 @@ async function main() {
     });
   }
   console.log(`  Riders: ${SEED_RIDERS.filter((r) => r.verified).length} verified (${SEED_RIDERS.filter((r) => r.online).length} online), ${SEED_RIDERS.filter((r) => !r.verified).length} waiting for verification`);
+
+  // Two weeks of past orders so the dashboard has something to show.
+  const { Timestamp: Ts } = await import('firebase-admin/firestore');
+  const old = await db.collection('orders').where('requestId', '>=', 'seed').where('requestId', '<', 'seee').get();
+  for (const d of old.docs) await d.ref.delete();
+  const customers = ['demo-customer', 'demo-owner-1', 'demo-owner-2', 'demo-owner-3', 'demo-owner-4', 'demo-rider-4'];
+  const riderIds = ['demo-rider', 'demo-rider-2', 'demo-shop-rider'];
+  const listedShops = SEED_SHOPS.filter((s) => s.verified);
+  let k = 0;
+  for (let day = 13; day >= 0; day--) {
+    const perDay = 2 + ((day * 7) % 5);
+    for (let i = 0; i < perDay; i++, k++) {
+      const shop = listedShops[k % listedShops.length]!;
+      const placedAt = Date.now() - day * 86_400_000 - (i + 1) * 3_600_000;
+      const status = k % 11 === 3 ? 'CANCELLED' : k % 13 === 5 ? 'EXPIRED' : 'COMPLETED';
+      const riderId = status === 'COMPLETED' && !shop.hasOwnRider ? riderIds[k % riderIds.length]! : null;
+      const item = shop.items[0]!;
+      const price = item.variants?.[0]?.price ?? item.price;
+      await db.doc(`orders/seed_${String(k).padStart(4, '0')}`).set({
+        requestId: `seed${String(k).padStart(8, '0')}`,
+        townId: DEMO_TOWN_ID,
+        customerId: customers[k % customers.length],
+        customerName: 'Demo customer',
+        customerPhone: '+639170000005',
+        shopId: shop.id,
+        shopOwnerId: shop.ownerUid,
+        shopName: shop.name,
+        shopPhone: shop.ownerPhone,
+        items: [{ itemId: 'x', name: item.name, variant: item.variants?.[0]?.name ?? null, addOns: [], qty: 1, note: '', unitPrice: price }],
+        itemsTotal: price,
+        deliveryFee: 40,
+        status,
+        riderId,
+        selfDelivery: shop.hasOwnRider,
+        participants: [customers[k % customers.length], shop.ownerUid, ...(riderId ? [riderId] : [])],
+        statusHistory: [
+          { status: 'PLACED', at: Ts.fromMillis(placedAt), by: 'customer' },
+          ...(status === 'COMPLETED'
+            ? [
+                { status: 'RIDER_ASSIGNED', at: Ts.fromMillis(placedAt + (2 + (k % 6)) * 60_000), by: riderId ? 'rider' : 'shop' },
+                { status: 'COMPLETED', at: Ts.fromMillis(placedAt + 40 * 60_000), by: 'customer' },
+              ]
+            : [{ status, at: Ts.fromMillis(placedAt + 10 * 60_000), by: 'system' }]),
+        ],
+        createdAt: Ts.fromMillis(placedAt),
+        updatedAt: Ts.fromMillis(placedAt),
+      });
+    }
+  }
+  console.log(`  Orders: ${k} sample orders over the last 14 days (for the dashboard)`);
 
   console.log('\nSeeded demo accounts. Sign in with any number above; the code shows in the emulator log.');
 }

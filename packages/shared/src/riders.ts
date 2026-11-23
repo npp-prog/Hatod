@@ -51,7 +51,7 @@ export type IneligibleReason = 'not_verified' | 'suspended' | 'offline' | 'subsc
  * shown; every condition must hold.
  */
 export function riderEligibility(
-  rider: { verified: boolean; status: 'active' | 'suspended'; online: boolean; servedBarangayIds: string[]; maxKm: number },
+  rider: { verified: boolean; status: 'active' | 'suspended' | 'banned'; online: boolean; servedBarangayIds: string[]; maxKm: number },
   subscription: SubscriptionStatus | null,
   trip: { dropoffBarangayId: string; billedKm: number },
 ): { eligible: true } | { eligible: false; reason: IneligibleReason } {

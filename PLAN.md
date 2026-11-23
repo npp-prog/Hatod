@@ -2,7 +2,7 @@
 
 Hatod is a mobile-first PWA that connects customers, food shops and independent riders in small Philippine towns. It is a **gateway only**: it never holds order money, takes no commission, runs no promos, and earns only from flat shop and rider subscriptions.
 
-Plan approved 2026-11-22 with the defaults below. Progress: **M1–M7 done**.
+Plan approved 2026-11-22 with the defaults below. Progress: **M1–M8 done**.
 
 ---
 
@@ -183,6 +183,16 @@ Seed data (one demo town, 10 barangays, 6 shops, 5 riders, 3 customers, all plan
 | Safety reports | Suspend at once only if people met on that order (a rider was assigned); before that, they are urgent but do not suspend, to limit abuse. The coordinator gets an SMS. |
 | Strikes | Stored on the shop, rider or customer record; 3 in 30 days → 7-day suspension lifted automatically. Late customer cancellations count. Shops cancelling with a reason do not. |
 | Reports queue | Built now (needed to confirm strikes); the rest of the coordinator tools come in M8. |
+
+### Decisions made during M8
+
+| Topic | Decision |
+|---|---|
+| Cash subscription payments | Moved to M9 with plans and subscriptions (they need a subscription to record against). |
+| Who can do what | Coordinators: verify, reject and suspend in their own towns (suspensions wait for admin review). Admins: everything, including ban and reinstate. Every action needs a note and is logged. |
+| Pre-launch onboarding | A town can accept sign-ups before going live. Coordinators share `?town=` sign-up links; customers can't see the town yet. |
+| Dashboard | Computed on the server from orders in the period. "Active riders" means riders with a completed delivery in the last 7 days. The plan's "online 3+ days per week" needs online-day tracking, which isn't built yet. |
+| Fixed in testing | Sign-in redirects now keep the link's query string (`?town=`), not just the path. |
 
 ### Original open questions (answered above)
 
